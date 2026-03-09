@@ -49,6 +49,7 @@ mvnw.cmd -q spring-boot:run
 
 - 仓库级说明见 `docs/REPOSITORY-READY.md`
 - 抽仓说明见 `docs/EXTRACTION.md`
+- GitHub 仓库元信息建议见 `docs/GITHUB-METADATA.md`
 - 下一阶段开发计划见 `docs/NEXT-DEVELOPMENT-PLAN.md`
 - CI / Release 工作流位于 `.github/workflows/ci.yml`、`.github/workflows/release.yml`
 - 贡献与安全说明位于 `CONTRIBUTING.md`、`SECURITY.md`
