@@ -11,9 +11,17 @@ import org.springframework.stereotype.Component;
 public class GatewayInfraredRealProtocolClient implements ProtocolClient {
 
     private final RemoteIntegrationProperties remoteIntegrationProperties;
+    private final GatewayInfraredPayloadFactory gatewayInfraredPayloadFactory;
+    private final GatewayInfraredSessionClient gatewayInfraredSessionClient;
 
-    public GatewayInfraredRealProtocolClient(RemoteIntegrationProperties remoteIntegrationProperties) {
+    public GatewayInfraredRealProtocolClient(
+            RemoteIntegrationProperties remoteIntegrationProperties,
+            GatewayInfraredPayloadFactory gatewayInfraredPayloadFactory,
+            GatewayInfraredSessionClient gatewayInfraredSessionClient
+    ) {
         this.remoteIntegrationProperties = remoteIntegrationProperties;
+        this.gatewayInfraredPayloadFactory = gatewayInfraredPayloadFactory;
+        this.gatewayInfraredSessionClient = gatewayInfraredSessionClient;
     }
 
     @Override
@@ -28,7 +36,7 @@ public class GatewayInfraredRealProtocolClient implements ProtocolClient {
 
     @Override
     public String description() {
-        return "Real-protocol skeleton for sending infrared commands through the home gateway API.";
+        return "First real-request infrared gateway client using HTTP command payloads with hub and token headers.";
     }
 
     @Override
@@ -45,12 +53,21 @@ public class GatewayInfraredRealProtocolClient implements ProtocolClient {
         if (gateway.infraredEndpoint() == null || gateway.infraredEndpoint().isBlank()) {
             throw new IllegalStateException("Gateway infrared endpoint is missing.");
         }
+        if (gateway.hubId() == null || gateway.hubId().isBlank()) {
+            throw new IllegalStateException("Gateway hub ID is missing.");
+        }
+        if (gateway.authToken() == null || gateway.authToken().isBlank()) {
+            throw new IllegalStateException("Gateway auth token is missing.");
+        }
+
+        GatewayInfraredCommandRequest request = gatewayInfraredPayloadFactory.create(gateway, device, command);
+        GatewayInfraredSessionResult sessionResult = gatewayInfraredSessionClient.sendCommand(request);
 
         return new ProtocolDispatchResult(
                 clientKey(),
                 integrationMode(),
-                gateway.infraredEndpoint(),
-                "Prepared an infrared gateway request for " + command + " via hub " + gateway.hubId() + " using token " + gateway.authToken() + "."
+                sessionResult.endpoint().toString(),
+                sessionResult.detail()
         );
     }
 }
