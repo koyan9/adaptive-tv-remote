@@ -38,6 +38,7 @@
             <div class="filter-row">
                 <button id="candidateFilterDiscovered" class="filter-chip is-active" type="button">Discovered</button>
                 <button id="candidateFilterAdopted" class="filter-chip" type="button">Adopted</button>
+                <button id="candidateFilterDismissed" class="filter-chip" type="button">Dismissed</button>
                 <button id="candidateFilterAll" class="filter-chip" type="button">All</button>
             </div>
             <div id="candidateList" class="candidate-list"></div>
@@ -136,6 +137,8 @@
                     </div>
                     <div class="guide-actions">
                         <button id="refreshSuggestionsButton" class="scan-button ghost small" type="button" disabled>Refresh suggestions</button>
+                        <button id="dismissCandidateButton" class="scan-button ghost small" type="button" disabled>Dismiss</button>
+                        <button id="reopenCandidateButton" class="scan-button ghost small" type="button" disabled>Reopen</button>
                         <button id="adoptCandidateButton" class="scan-button small" type="button" disabled>Adopt Candidate</button>
                     </div>
                 </div>

@@ -88,6 +88,30 @@ public class CandidateDiscoveryService {
     }
 
     @Transactional
+    public DiscoveryCandidateSummary dismissCandidate(String candidateId) {
+        CandidateDeviceEntity candidate = getCandidate(candidateId);
+        if (candidate.getStatus() == CandidateStatus.ADOPTED) {
+            throw new IllegalArgumentException("Adopted candidates cannot be dismissed.");
+        }
+        candidate.setStatus(CandidateStatus.DISMISSED);
+        candidate.markSeen();
+        candidateDeviceRepository.save(candidate);
+        return toSummary(candidate);
+    }
+
+    @Transactional
+    public DiscoveryCandidateSummary reopenCandidate(String candidateId) {
+        CandidateDeviceEntity candidate = getCandidate(candidateId);
+        if (candidate.getStatus() != CandidateStatus.DISMISSED) {
+            throw new IllegalArgumentException("Only dismissed candidates can be reopened.");
+        }
+        candidate.setStatus(CandidateStatus.DISCOVERED);
+        candidate.markSeen();
+        candidateDeviceRepository.save(candidate);
+        return toSummary(candidate);
+    }
+
+    @Transactional
     public RemoteDevice adoptCandidate(String candidateId, CandidateAdoptionRequest request) {
         CandidateDeviceEntity candidate = getCandidate(candidateId);
         if (candidate.getStatus() != CandidateStatus.DISCOVERED) {

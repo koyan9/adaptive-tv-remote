@@ -23,6 +23,8 @@ const els = {
   refreshSuggestionsButton: document.getElementById("refreshSuggestionsButton"),
   retryOnboardingButton: document.getElementById("retryOnboardingButton"),
   openAdoptedDeviceButton: document.getElementById("openAdoptedDeviceButton"),
+  dismissCandidateButton: document.getElementById("dismissCandidateButton"),
+  reopenCandidateButton: document.getElementById("reopenCandidateButton"),
   networkBadge: document.getElementById("networkBadge"),
   candidateBadge: document.getElementById("candidateBadge"),
   deviceName: document.getElementById("deviceName"),
@@ -54,6 +56,7 @@ const els = {
   wizardSteps: [...document.querySelectorAll(".wizard-step")],
   candidateFilterDiscovered: document.getElementById("candidateFilterDiscovered"),
   candidateFilterAdopted: document.getElementById("candidateFilterAdopted"),
+  candidateFilterDismissed: document.getElementById("candidateFilterDismissed"),
   candidateFilterAll: document.getElementById("candidateFilterAll")
 };
 
@@ -170,7 +173,7 @@ async function loadOnboardingStatus() {
 
 async function loadCandidateSuggestions() {
   const candidate = getSelectedCandidate();
-  if (!candidate) {
+  if (!candidate || candidate.status !== "DISCOVERED") {
     state.candidateSuggestions = [];
     return;
   }
@@ -229,7 +232,9 @@ function renderCandidates() {
       ? "No discovered candidates. Use Find candidates to scan the home."
       : state.candidateFilter === "ADOPTED"
         ? "No adopted candidates yet."
-        : "No candidates available.";
+        : state.candidateFilter === "DISMISSED"
+          ? "No dismissed candidates."
+          : "No candidates available.";
     els.candidateList.appendChild(empty);
     els.candidateBadge.textContent = "No candidates";
     return;
@@ -355,6 +360,8 @@ function renderCandidateGuideBase() {
     els.candidateSuggestions.innerHTML = "";
     els.adoptCandidateButton.disabled = true;
     els.refreshSuggestionsButton.disabled = true;
+    els.dismissCandidateButton.disabled = true;
+    els.reopenCandidateButton.disabled = true;
     els.openAdoptedDeviceButton.disabled = true;
     return;
   }
@@ -366,7 +373,9 @@ function renderCandidateGuideBase() {
     ? "This candidate is online and ready for direct onboarding or adaptive fallback."
     : "This candidate is offline and may need gateway-assisted onboarding.";
   els.adoptCandidateButton.disabled = candidate.status !== "DISCOVERED";
-  els.refreshSuggestionsButton.disabled = false;
+  els.refreshSuggestionsButton.disabled = candidate.status !== "DISCOVERED";
+  els.dismissCandidateButton.disabled = candidate.status !== "DISCOVERED";
+  els.reopenCandidateButton.disabled = candidate.status !== "DISMISSED";
   els.openAdoptedDeviceButton.disabled = !(candidate.status === "ADOPTED" && candidate.adoptedDeviceId);
 }
 
@@ -375,6 +384,16 @@ function renderCandidateGuide() {
   els.candidateSuggestions.innerHTML = "";
 
   if (!candidate) {
+    return;
+  }
+
+  if (candidate.status !== "DISCOVERED") {
+    const note = document.createElement("p");
+    note.className = "muted";
+    note.textContent = candidate.status === "DISMISSED"
+      ? "This candidate is dismissed. Reopen it to continue onboarding."
+      : "This candidate has already been adopted. Use Open Adopted Device to jump into the remote workspace.";
+    els.candidateSuggestions.appendChild(note);
     return;
   }
 
@@ -456,6 +475,27 @@ async function adoptSelectedCandidate() {
       message: error.message
     };
     els.adoptCandidateButton.disabled = false;
+    renderCandidateGuideBase();
+  }
+}
+
+async function changeCandidateStatus(action) {
+  const candidate = getSelectedCandidate();
+  if (!candidate) {
+    return;
+  }
+
+  try {
+    state.guideError = null;
+    state.adoptionSuccess = null;
+    await api(`/api/remote/discovery/candidates/${candidate.id}/${action}`, { method: "POST" });
+    await loadCandidates();
+    await refreshSelectedCandidate();
+  } catch (error) {
+    state.guideError = {
+      title: action === "dismiss" ? "Dismiss failed" : "Reopen failed",
+      message: error.message
+    };
     renderCandidateGuideBase();
   }
 }
@@ -564,6 +604,7 @@ function setCandidateFilter(filter) {
   state.candidateFilter = filter;
   els.candidateFilterDiscovered.classList.toggle("is-active", filter === "DISCOVERED");
   els.candidateFilterAdopted.classList.toggle("is-active", filter === "ADOPTED");
+  els.candidateFilterDismissed.classList.toggle("is-active", filter === "DISMISSED");
   els.candidateFilterAll.classList.toggle("is-active", filter === "ALL");
   syncCandidateSelection();
   renderCandidates();
@@ -593,9 +634,12 @@ els.scanCandidatesButton.addEventListener("click", async () => {
 els.refreshSuggestionsButton.addEventListener("click", refreshSuggestions);
 els.retryOnboardingButton.addEventListener("click", retryOnboarding);
 els.openAdoptedDeviceButton.addEventListener("click", openAdoptedDevice);
+els.dismissCandidateButton.addEventListener("click", () => changeCandidateStatus("dismiss"));
+els.reopenCandidateButton.addEventListener("click", () => changeCandidateStatus("reopen"));
 els.adoptCandidateButton.addEventListener("click", adoptSelectedCandidate);
 els.candidateFilterDiscovered.addEventListener("click", () => setCandidateFilter("DISCOVERED"));
 els.candidateFilterAdopted.addEventListener("click", () => setCandidateFilter("ADOPTED"));
+els.candidateFilterDismissed.addEventListener("click", () => setCandidateFilter("DISMISSED"));
 els.candidateFilterAll.addEventListener("click", () => setCandidateFilter("ALL"));
 
 if ("serviceWorker" in navigator) {

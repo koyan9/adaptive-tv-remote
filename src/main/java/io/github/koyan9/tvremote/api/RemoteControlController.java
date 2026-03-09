@@ -153,6 +153,16 @@ public class RemoteControlController {
         return candidateDiscoveryService.adoptCandidate(candidateId, request);
     }
 
+    @PostMapping("/discovery/candidates/{candidateId}/dismiss")
+    public DiscoveryCandidateSummary dismissCandidate(@PathVariable String candidateId) {
+        return candidateDiscoveryService.dismissCandidate(candidateId);
+    }
+
+    @PostMapping("/discovery/candidates/{candidateId}/reopen")
+    public DiscoveryCandidateSummary reopenCandidate(@PathVariable String candidateId) {
+        return candidateDiscoveryService.reopenCandidate(candidateId);
+    }
+
     @GetMapping("/devices")
     public List<RemoteDevice> devices() {
         return deviceCatalogService.televisionDevices();
