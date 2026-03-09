@@ -117,4 +117,44 @@ class SamsungCandidateOnboardingTest {
                 .andExpect(jsonPath("$.route").value("LAN_DIRECT"))
                 .andExpect(jsonPath("$.integrationEndpoint").value(org.hamcrest.Matchers.containsString("token=candidate-samsung-token")));
     }
+
+    @Test
+    void retriesSamsungOnboardingForAdoptedDevice() throws Exception {
+        given(samsungLanHandshakeClient.startHandshake(any(SamsungLanHandshakeRequest.class)))
+                .willReturn(
+                        new SamsungLanHandshakeResult(
+                                URI.create("ws://192.168.50.21:8001/api/v2/channels/samsung.remote.control?name=QWRhcHRpdmUgVFYgUmVtb3Rl"),
+                                "candidate-samsung-token",
+                                "Opened a Samsung LAN pairing handshake and captured a candidate token."
+                        ),
+                        new SamsungLanHandshakeResult(
+                                URI.create("ws://192.168.50.21:8001/api/v2/channels/samsung.remote.control?name=QWRhcHRpdmUgVFYgUmVtb3Rl"),
+                                "candidate-samsung-token-v2",
+                                "Retried Samsung LAN onboarding and captured a refreshed token."
+                        )
+                );
+
+        mockMvc.perform(post("/api/remote/discovery/candidates/scan"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/remote/discovery/candidates/candidate-loft-samsung/adopt")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "roomName": "Loft",
+                                  "autoCreatePairings": true,
+                                  "autoStartBrandOnboarding": true
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/remote/devices/tv-loft-samsung/onboarding/retry").param("brand", "Samsung"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.brand").value("Samsung"))
+                .andExpect(jsonPath("$.negotiatedCredential").value("candidate-samsung-token-v2"));
+
+        mockMvc.perform(get("/api/remote/devices/tv-loft-samsung/onboarding/sessions").param("brand", "Samsung"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+    }
 }

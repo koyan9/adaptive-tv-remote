@@ -11,5 +11,7 @@ public interface CandidateDeviceRepository extends JpaRepository<CandidateDevice
 
     List<CandidateDeviceEntity> findAllByOrderBySortOrderAsc();
 
+    List<CandidateDeviceEntity> findAllByAdoptedDeviceIdOrderByUpdatedAtDesc(String adoptedDeviceId);
+
     long countByStatus(CandidateStatus status);
 }

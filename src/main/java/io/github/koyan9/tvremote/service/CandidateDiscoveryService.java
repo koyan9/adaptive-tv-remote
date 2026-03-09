@@ -144,6 +144,20 @@ public class CandidateDiscoveryService {
         return device;
     }
 
+    @Transactional
+    public io.github.koyan9.tvremote.model.BrandOnboardingSessionSummary retryOnboardingForDevice(String deviceId, String brand) {
+        CandidateDeviceEntity candidate = candidateDeviceRepository.findAllByAdoptedDeviceIdOrderByUpdatedAtDesc(deviceId).stream()
+                .filter(found -> brand == null || brand.isBlank() || found.getBrand().equalsIgnoreCase(brand))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("No adopted candidate found for device " + deviceId));
+
+        if (!supportsBrandOnboarding(candidate)) {
+            throw new IllegalArgumentException("Device " + deviceId + " does not support brand onboarding retry.");
+        }
+
+        return brandOnboardingRegistry.startForCandidate(deviceId, candidate);
+    }
+
     private CandidateDeviceEntity getCandidate(String candidateId) {
         return candidateDeviceRepository.findById(candidateId)
                 .orElseThrow(() -> new NoSuchElementException("Candidate not found: " + candidateId));

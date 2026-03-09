@@ -70,7 +70,10 @@
             <section class="onboarding-panel">
                 <div class="panel-heading onboarding-heading">
                     <h2>Onboarding</h2>
-                    <span id="onboardingState" class="badge muted">No session</span>
+                    <div class="guide-actions">
+                        <span id="onboardingState" class="badge muted">No session</span>
+                        <button id="retryOnboardingButton" class="scan-button ghost small" type="button" disabled>Retry onboarding</button>
+                    </div>
                 </div>
                 <div class="onboarding-grid">
                     <article class="status-card">
@@ -135,6 +138,23 @@
                         <button id="refreshSuggestionsButton" class="scan-button ghost small" type="button" disabled>Refresh suggestions</button>
                         <button id="adoptCandidateButton" class="scan-button small" type="button" disabled>Adopt Candidate</button>
                     </div>
+                </div>
+
+                <div class="guide-options">
+                    <label class="option-chip">
+                        <input id="guideAutoPairings" type="checkbox" checked>
+                        <span>Auto-create pairings</span>
+                    </label>
+                    <label class="option-chip">
+                        <input id="guideAutoOnboarding" type="checkbox" checked>
+                        <span>Auto-start onboarding</span>
+                    </label>
+                    <button id="openAdoptedDeviceButton" class="scan-button ghost small" type="button" disabled>Open Adopted Device</button>
+                </div>
+
+                <div id="guideErrorBanner" class="error-banner hidden">
+                    <strong id="guideErrorTitle">Setup failed</strong>
+                    <p id="guideErrorMessage">An error occurred while processing the selected candidate.</p>
                 </div>
 
                 <div id="guideSuccessBanner" class="success-banner hidden">

@@ -756,3 +756,44 @@ h2 {
         grid-template-columns: 1fr;
     }
 }
+.guide-options {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 12px 0 14px;
+}
+
+.option-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+}
+
+.option-chip input {
+    accent-color: var(--gold);
+}
+
+.error-banner {
+    margin: 14px 0;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(244, 111, 111, 0.36);
+    background: rgba(244, 111, 111, 0.08);
+}
+
+.error-banner strong,
+.error-banner p {
+    display: block;
+    margin: 0;
+}
+
+.error-banner p {
+    margin-top: 6px;
+    color: var(--muted);
+}

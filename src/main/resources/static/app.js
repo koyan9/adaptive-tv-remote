@@ -7,7 +7,8 @@
   candidateSuggestions: [],
   executions: [],
   onboardingStatus: null,
-  adoptionSuccess: null
+  adoptionSuccess: null,
+  guideError: null
 };
 
 const els = {
@@ -20,6 +21,8 @@ const els = {
   scanButton: document.getElementById("scanButton"),
   scanCandidatesButton: document.getElementById("scanCandidatesButton"),
   refreshSuggestionsButton: document.getElementById("refreshSuggestionsButton"),
+  retryOnboardingButton: document.getElementById("retryOnboardingButton"),
+  openAdoptedDeviceButton: document.getElementById("openAdoptedDeviceButton"),
   networkBadge: document.getElementById("networkBadge"),
   candidateBadge: document.getElementById("candidateBadge"),
   deviceName: document.getElementById("deviceName"),
@@ -43,6 +46,11 @@ const els = {
   guideSuccessBanner: document.getElementById("guideSuccessBanner"),
   guideSuccessTitle: document.getElementById("guideSuccessTitle"),
   guideSuccessMessage: document.getElementById("guideSuccessMessage"),
+  guideErrorBanner: document.getElementById("guideErrorBanner"),
+  guideErrorTitle: document.getElementById("guideErrorTitle"),
+  guideErrorMessage: document.getElementById("guideErrorMessage"),
+  guideAutoPairings: document.getElementById("guideAutoPairings"),
+  guideAutoOnboarding: document.getElementById("guideAutoOnboarding"),
   wizardSteps: [...document.querySelectorAll(".wizard-step")],
   candidateFilterDiscovered: document.getElementById("candidateFilterDiscovered"),
   candidateFilterAdopted: document.getElementById("candidateFilterAdopted"),
@@ -132,6 +140,8 @@ async function scanHome() {
 }
 
 async function scanCandidates() {
+  state.guideError = null;
+  state.adoptionSuccess = null;
   els.candidateBadge.textContent = "Scanning…";
   state.candidates = await api("/api/remote/discovery/candidates/scan", { method: "POST" });
   syncCandidateSelection();
@@ -246,6 +256,7 @@ function renderCandidates() {
 
     button.addEventListener("click", async () => {
       state.selectedCandidateId = candidate.id;
+      state.guideError = null;
       renderCandidates();
       await refreshSelectedCandidate();
     });
@@ -299,6 +310,7 @@ function renderOnboardingStatus() {
     els.onboardingSessionCount.textContent = "0";
     els.onboardingCredential.textContent = "—";
     els.onboardingDetail.textContent = "Select a device to view onboarding status.";
+    els.retryOnboardingButton.disabled = true;
     return;
   }
 
@@ -308,6 +320,7 @@ function renderOnboardingStatus() {
     els.onboardingSessionCount.textContent = "0";
     els.onboardingCredential.textContent = "—";
     els.onboardingDetail.textContent = "This device does not require brand onboarding for its current integration path.";
+    els.retryOnboardingButton.disabled = true;
     return;
   }
 
@@ -316,14 +329,22 @@ function renderOnboardingStatus() {
   els.onboardingSessionCount.textContent = String(status.sessionCount ?? 0);
   els.onboardingCredential.textContent = status.negotiatedCredentialPresent ? (status.credentialPreview || "Stored") : "Not negotiated";
   els.onboardingDetail.textContent = status.latestDetail || "No onboarding session has been recorded yet.";
+  els.retryOnboardingButton.disabled = false;
 }
 
 function renderCandidateGuideBase() {
   const candidate = getSelectedCandidate();
   els.guideSuccessBanner.classList.toggle("hidden", !state.adoptionSuccess);
+  els.guideErrorBanner.classList.toggle("hidden", !state.guideError);
+
   if (state.adoptionSuccess) {
     els.guideSuccessTitle.textContent = `${state.adoptionSuccess.displayName} adopted`;
     els.guideSuccessMessage.textContent = `${state.adoptionSuccess.displayName} is now part of the device catalog as ${state.adoptionSuccess.deviceId}.`;
+  }
+
+  if (state.guideError) {
+    els.guideErrorTitle.textContent = state.guideError.title;
+    els.guideErrorMessage.textContent = state.guideError.message;
   }
 
   if (!candidate) {
@@ -334,6 +355,7 @@ function renderCandidateGuideBase() {
     els.candidateSuggestions.innerHTML = "";
     els.adoptCandidateButton.disabled = true;
     els.refreshSuggestionsButton.disabled = true;
+    els.openAdoptedDeviceButton.disabled = true;
     return;
   }
 
@@ -345,6 +367,7 @@ function renderCandidateGuideBase() {
     : "This candidate is offline and may need gateway-assisted onboarding.";
   els.adoptCandidateButton.disabled = candidate.status !== "DISCOVERED";
   els.refreshSuggestionsButton.disabled = false;
+  els.openAdoptedDeviceButton.disabled = !(candidate.status === "ADOPTED" && candidate.adoptedDeviceId);
 }
 
 function renderCandidateGuide() {
@@ -392,6 +415,7 @@ function renderWizardSteps() {
 }
 
 async function refreshSuggestions() {
+  state.guideError = null;
   await loadCandidateSuggestions();
   renderCandidateGuide();
   renderWizardSteps();
@@ -405,11 +429,14 @@ async function adoptSelectedCandidate() {
 
   const payload = {
     roomName: candidate.roomName,
-    autoCreatePairings: true,
-    autoStartBrandOnboarding: true
+    autoCreatePairings: els.guideAutoPairings.checked,
+    autoStartBrandOnboarding: els.guideAutoOnboarding.checked
   };
 
   try {
+    state.guideError = null;
+    state.adoptionSuccess = null;
+    renderCandidateGuideBase();
     els.adoptCandidateButton.disabled = true;
     els.candidateState.textContent = "Adopting…";
     const adopted = await api(`/api/remote/discovery/candidates/${candidate.id}/adopt`, {
@@ -424,9 +451,53 @@ async function adoptSelectedCandidate() {
     await refreshSelectedDevice();
     await refreshSelectedCandidate();
   } catch (error) {
-    els.candidateSummary.textContent = error.message;
+    state.guideError = {
+      title: "Adoption failed",
+      message: error.message
+    };
     els.adoptCandidateButton.disabled = false;
+    renderCandidateGuideBase();
   }
+}
+
+async function retryOnboarding() {
+  const device = getSelectedDevice();
+  if (!device || !state.onboardingStatus?.onboardingSupported) {
+    return;
+  }
+
+  try {
+    els.retryOnboardingButton.disabled = true;
+    state.guideError = null;
+    await api(`/api/remote/devices/${device.id}/onboarding/retry?brand=${encodeURIComponent(device.brand)}`, {
+      method: "POST"
+    });
+    await loadOnboardingStatus();
+    renderOnboardingStatus();
+    state.adoptionSuccess = {
+      displayName: device.displayName,
+      deviceId: device.id
+    };
+    renderCandidateGuideBase();
+  } catch (error) {
+    state.guideError = {
+      title: "Onboarding retry failed",
+      message: error.message
+    };
+    renderCandidateGuideBase();
+  } finally {
+    els.retryOnboardingButton.disabled = false;
+  }
+}
+
+function openAdoptedDevice() {
+  const candidate = getSelectedCandidate();
+  if (!candidate?.adoptedDeviceId) {
+    return;
+  }
+  state.selectedDeviceId = candidate.adoptedDeviceId;
+  renderDevices();
+  refreshSelectedDevice();
 }
 
 function renderExecutions() {
@@ -520,6 +591,8 @@ els.scanCandidatesButton.addEventListener("click", async () => {
 });
 
 els.refreshSuggestionsButton.addEventListener("click", refreshSuggestions);
+els.retryOnboardingButton.addEventListener("click", retryOnboarding);
+els.openAdoptedDeviceButton.addEventListener("click", openAdoptedDevice);
 els.adoptCandidateButton.addEventListener("click", adoptSelectedCandidate);
 els.candidateFilterDiscovered.addEventListener("click", () => setCandidateFilter("DISCOVERED"));
 els.candidateFilterAdopted.addEventListener("click", () => setCandidateFilter("ADOPTED"));

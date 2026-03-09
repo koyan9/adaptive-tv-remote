@@ -125,6 +125,14 @@ public class RemoteControlController {
         return onboardingStatusService.statusForDevice(deviceId);
     }
 
+    @PostMapping("/devices/{deviceId}/onboarding/retry")
+    public BrandOnboardingSessionSummary retryOnboarding(
+            @PathVariable String deviceId,
+            @RequestParam(required = false) String brand
+    ) {
+        return candidateDiscoveryService.retryOnboardingForDevice(deviceId, brand);
+    }
+
     @GetMapping("/discovery/candidates")
     public List<DiscoveryCandidateSummary> candidates(@RequestParam(required = false) io.github.koyan9.tvremote.domain.CandidateStatus status) {
         return candidateDiscoveryService.candidates(status);
