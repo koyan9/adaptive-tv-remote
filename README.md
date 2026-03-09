@@ -15,7 +15,8 @@
 - 统一的 `RemoteCommand` 指令模型
 - `LAN_DIRECT`、`IR_GATEWAY`、`HDMI_CEC_GATEWAY` 三种控制路径
 - 基于品牌和路径的适配器扩展点
-- 内置模拟设备发现、设备画像和命令执行历史
+- 支持家庭、房间、设备、配对关系的持久化目录
+- 内置设备发现、设备画像、配对关系和命令执行历史
 - 自带手机友好的网页遥控器界面
 - 支持 `mock / real skeleton` 按适配器切换
 
@@ -56,8 +57,13 @@ mvnw.cmd -q spring-boot:run
 
 ## 主要接口
 
+- `GET /api/remote/households`
+- `GET /api/remote/rooms`
 - `GET /api/remote/devices`
 - `GET /api/remote/devices/{deviceId}`
+- `POST /api/remote/devices/register`
+- `GET /api/remote/devices/{deviceId}/pairings`
+- `POST /api/remote/pairings`
 - `POST /api/remote/discovery/scan`
 - `POST /api/remote/devices/{deviceId}/commands`
 - `GET /api/remote/executions`

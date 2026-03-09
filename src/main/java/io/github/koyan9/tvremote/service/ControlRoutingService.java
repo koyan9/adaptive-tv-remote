@@ -12,9 +12,14 @@ import java.util.List;
 public class ControlRoutingService {
 
     private final DeviceCatalogService deviceCatalogService;
+    private final PairingManagementService pairingManagementService;
 
-    public ControlRoutingService(DeviceCatalogService deviceCatalogService) {
+    public ControlRoutingService(
+            DeviceCatalogService deviceCatalogService,
+            PairingManagementService pairingManagementService
+    ) {
         this.deviceCatalogService = deviceCatalogService;
+        this.pairingManagementService = pairingManagementService;
     }
 
     public ControlDecision chooseRoute(RemoteDevice device, String preferredGatewayId) {
@@ -36,7 +41,7 @@ public class ControlRoutingService {
             }
 
             if (candidate == ControlPath.IR_GATEWAY || candidate == ControlPath.HDMI_CEC_GATEWAY) {
-                RemoteDevice gateway = resolveGateway(device, preferredGatewayId);
+                RemoteDevice gateway = resolveGateway(device, candidate, preferredGatewayId);
                 if (gateway != null && gateway.online() && gateway.availablePaths().contains(candidate)) {
                     return new ControlDecision(
                             candidate,
@@ -52,7 +57,15 @@ public class ControlRoutingService {
         throw new ControlRoutingException("No viable control path is available for device " + device.displayName());
     }
 
-    private RemoteDevice resolveGateway(RemoteDevice device, String preferredGatewayId) {
+    private RemoteDevice resolveGateway(RemoteDevice device, ControlPath controlPath, String preferredGatewayId) {
+        String pairedGatewayId = pairingManagementService.resolveGatewayForRouting(device.id(), controlPath, preferredGatewayId);
+        if (pairedGatewayId != null) {
+            try {
+                return deviceCatalogService.getGateway(pairedGatewayId);
+            } catch (Exception ignored) {
+            }
+        }
+
         if (preferredGatewayId != null && !preferredGatewayId.isBlank()) {
             try {
                 return deviceCatalogService.getGateway(preferredGatewayId);

@@ -7,6 +7,8 @@ import io.github.koyan9.tvremote.config.RemoteProjectProperties;
 import io.github.koyan9.tvremote.integration.ProtocolClientRegistry;
 import io.github.koyan9.tvremote.model.CommandRequest;
 import io.github.koyan9.tvremote.model.CommandResult;
+import io.github.koyan9.tvremote.model.DevicePairingRequest;
+import io.github.koyan9.tvremote.model.DevicePairingSummary;
 import io.github.koyan9.tvremote.model.DeviceRegistrationRequest;
 import io.github.koyan9.tvremote.model.DiscoveryResult;
 import io.github.koyan9.tvremote.model.HouseholdSummary;
@@ -15,6 +17,7 @@ import io.github.koyan9.tvremote.model.RoomSummary;
 import io.github.koyan9.tvremote.service.ControlExecutionService;
 import io.github.koyan9.tvremote.service.DeviceCatalogService;
 import io.github.koyan9.tvremote.service.DiscoveryService;
+import io.github.koyan9.tvremote.service.PairingManagementService;
 import io.github.koyan9.tvremote.service.RemoteManagementService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,6 +44,7 @@ public class RemoteControlController {
     private final ProtocolClientRegistry protocolClientRegistry;
     private final RemoteIntegrationProperties remoteIntegrationProperties;
     private final RemoteManagementService remoteManagementService;
+    private final PairingManagementService pairingManagementService;
 
     public RemoteControlController(
             DeviceCatalogService deviceCatalogService,
@@ -50,7 +54,8 @@ public class RemoteControlController {
             RemoteProjectProperties remoteProjectProperties,
             ProtocolClientRegistry protocolClientRegistry,
             RemoteIntegrationProperties remoteIntegrationProperties,
-            RemoteManagementService remoteManagementService
+            RemoteManagementService remoteManagementService,
+            PairingManagementService pairingManagementService
     ) {
         this.deviceCatalogService = deviceCatalogService;
         this.discoveryService = discoveryService;
@@ -60,6 +65,7 @@ public class RemoteControlController {
         this.protocolClientRegistry = protocolClientRegistry;
         this.remoteIntegrationProperties = remoteIntegrationProperties;
         this.remoteManagementService = remoteManagementService;
+        this.pairingManagementService = pairingManagementService;
     }
 
     @GetMapping("/households")
@@ -72,6 +78,11 @@ public class RemoteControlController {
         return remoteManagementService.rooms(householdId);
     }
 
+    @GetMapping("/devices/{deviceId}/pairings")
+    public List<DevicePairingSummary> pairings(@PathVariable String deviceId) {
+        return pairingManagementService.pairingsForDevice(deviceId);
+    }
+
     @GetMapping("/devices")
     public List<RemoteDevice> devices() {
         return deviceCatalogService.televisionDevices();
@@ -80,6 +91,11 @@ public class RemoteControlController {
     @PostMapping("/devices/register")
     public RemoteDevice registerDevice(@Valid @RequestBody DeviceRegistrationRequest request) {
         return remoteManagementService.registerDevice(request);
+    }
+
+    @PostMapping("/pairings")
+    public DevicePairingSummary createPairing(@Valid @RequestBody DevicePairingRequest request) {
+        return pairingManagementService.createPairing(request);
     }
 
     @GetMapping("/devices/{deviceId}")
