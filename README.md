@@ -67,12 +67,16 @@ mvnw.cmd -q spring-boot:run
 - `POST /api/remote/discovery/candidates/scan`
 - `GET /api/remote/discovery/candidates/{candidateId}/pairing-suggestions`
 - `POST /api/remote/discovery/candidates/{candidateId}/adopt`
+- `POST /api/remote/discovery/candidates/{candidateId}/dismiss`
+- `POST /api/remote/discovery/candidates/{candidateId}/reopen`
 - `GET /api/remote/devices`
 - `GET /api/remote/devices/{deviceId}`
 - `POST /api/remote/devices/register`
 - `GET /api/remote/devices/{deviceId}/pairings`
 - `GET /api/remote/devices/{deviceId}/onboarding/samsung-handshakes`
 - `GET /api/remote/devices/{deviceId}/onboarding/sessions`
+- `GET /api/remote/devices/{deviceId}/onboarding/status`
+- `POST /api/remote/devices/{deviceId}/onboarding/retry`
 - `POST /api/remote/pairings`
 - `PATCH /api/remote/pairings/{pairingId}`
 - `DELETE /api/remote/pairings/{pairingId}`
@@ -119,3 +123,4 @@ mvnw.cmd -q spring-boot:run -Dspring-boot.run.arguments="--remote.integration.ad
 ```powershell
 mvnw.cmd -q spring-boot:run -Dspring-boot.run.arguments="--remote.integration.adapter-modes.generic-hdmi-cec=real"
 ```
+
