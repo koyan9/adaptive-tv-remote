@@ -18,12 +18,14 @@ import io.github.koyan9.tvremote.model.HouseholdSummary;
 import io.github.koyan9.tvremote.model.PairingSuggestion;
 import io.github.koyan9.tvremote.model.RemoteDevice;
 import io.github.koyan9.tvremote.model.RoomSummary;
+import io.github.koyan9.tvremote.model.SamsungHandshakeSummary;
 import io.github.koyan9.tvremote.service.ControlExecutionService;
 import io.github.koyan9.tvremote.service.CandidateDiscoveryService;
 import io.github.koyan9.tvremote.service.DeviceCatalogService;
 import io.github.koyan9.tvremote.service.DiscoveryService;
 import io.github.koyan9.tvremote.service.PairingManagementService;
 import io.github.koyan9.tvremote.service.RemoteManagementService;
+import io.github.koyan9.tvremote.service.SamsungOnboardingService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -52,6 +54,7 @@ public class RemoteControlController {
     private final RemoteIntegrationProperties remoteIntegrationProperties;
     private final RemoteManagementService remoteManagementService;
     private final PairingManagementService pairingManagementService;
+    private final SamsungOnboardingService samsungOnboardingService;
 
     public RemoteControlController(
             DeviceCatalogService deviceCatalogService,
@@ -63,7 +66,8 @@ public class RemoteControlController {
             ProtocolClientRegistry protocolClientRegistry,
             RemoteIntegrationProperties remoteIntegrationProperties,
             RemoteManagementService remoteManagementService,
-            PairingManagementService pairingManagementService
+            PairingManagementService pairingManagementService,
+            SamsungOnboardingService samsungOnboardingService
     ) {
         this.deviceCatalogService = deviceCatalogService;
         this.discoveryService = discoveryService;
@@ -75,6 +79,7 @@ public class RemoteControlController {
         this.remoteIntegrationProperties = remoteIntegrationProperties;
         this.remoteManagementService = remoteManagementService;
         this.pairingManagementService = pairingManagementService;
+        this.samsungOnboardingService = samsungOnboardingService;
     }
 
     @GetMapping("/households")
@@ -90,6 +95,11 @@ public class RemoteControlController {
     @GetMapping("/devices/{deviceId}/pairings")
     public List<DevicePairingSummary> pairings(@PathVariable String deviceId) {
         return pairingManagementService.pairingsForDevice(deviceId);
+    }
+
+    @GetMapping("/devices/{deviceId}/onboarding/samsung-handshakes")
+    public List<SamsungHandshakeSummary> samsungHandshakes(@PathVariable String deviceId) {
+        return samsungOnboardingService.handshakes(deviceId);
     }
 
     @GetMapping("/discovery/candidates")

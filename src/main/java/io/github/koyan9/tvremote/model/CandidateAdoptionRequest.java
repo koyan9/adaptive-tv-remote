@@ -5,9 +5,11 @@ public record CandidateAdoptionRequest(
         String householdId,
         String roomId,
         String roomName,
-        Boolean autoCreatePairings
+        Boolean autoCreatePairings,
+        Boolean autoStartSamsungHandshake
 ) {
     public CandidateAdoptionRequest {
         autoCreatePairings = autoCreatePairings == null ? Boolean.TRUE : autoCreatePairings;
+        autoStartSamsungHandshake = autoStartSamsungHandshake == null ? Boolean.TRUE : autoStartSamsungHandshake;
     }
 }

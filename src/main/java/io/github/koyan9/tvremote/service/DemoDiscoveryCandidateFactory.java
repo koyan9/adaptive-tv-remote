@@ -18,8 +18,31 @@ public class DemoDiscoveryCandidateFactory {
     public List<CandidateDeviceEntity> candidates(HouseholdEntity household) {
         return List.of(
                 new CandidateDeviceEntity(
-                        "candidate-kitchen-lg",
+                        "candidate-loft-samsung",
                         0,
+                        household,
+                        "Loft Samsung TV",
+                        DeviceType.SMART_TV,
+                        "Samsung",
+                        "QN85D",
+                        "Loft",
+                        true,
+                        EnumSet.of(ControlPath.LAN_DIRECT, ControlPath.IR_GATEWAY),
+                        EnumSet.of(RemoteCommand.HOME, RemoteCommand.BACK, RemoteCommand.VOLUME_UP, RemoteCommand.VOLUME_DOWN, RemoteCommand.DPAD_UP, RemoteCommand.DPAD_DOWN, RemoteCommand.DPAD_LEFT, RemoteCommand.DPAD_RIGHT, RemoteCommand.OK),
+                        List.of(ControlPath.LAN_DIRECT, ControlPath.IR_GATEWAY),
+                        true,
+                        true,
+                        true,
+                        "Loft Samsung QLED",
+                        "Discovered on Wi-Fi and should go through Samsung LAN onboarding.",
+                        "demo-samsung-scan",
+                        CandidateStatus.DISCOVERED,
+                        null,
+                        Instant.now()
+                ),
+                new CandidateDeviceEntity(
+                        "candidate-kitchen-lg",
+                        1,
                         household,
                         "Kitchen LG TV",
                         DeviceType.SMART_TV,
@@ -42,7 +65,7 @@ public class DemoDiscoveryCandidateFactory {
                 ),
                 new CandidateDeviceEntity(
                         "candidate-playroom-projector",
-                        1,
+                        2,
                         household,
                         "Playroom Projector",
                         DeviceType.LEGACY_TV,

@@ -5,6 +5,7 @@ import io.github.koyan9.tvremote.config.RemoteIntegrationProperties;
 import io.github.koyan9.tvremote.domain.RemoteCommand;
 import io.github.koyan9.tvremote.model.ControlDecision;
 import io.github.koyan9.tvremote.model.RemoteDevice;
+import io.github.koyan9.tvremote.service.SamsungOnboardingService;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -13,15 +14,18 @@ public class SamsungLanRealProtocolClient implements ProtocolClient {
     private final RemoteIntegrationProperties remoteIntegrationProperties;
     private final SamsungLanPayloadFactory samsungLanPayloadFactory;
     private final SamsungLanSessionClient samsungLanSessionClient;
+    private final SamsungOnboardingService samsungOnboardingService;
 
     public SamsungLanRealProtocolClient(
             RemoteIntegrationProperties remoteIntegrationProperties,
             SamsungLanPayloadFactory samsungLanPayloadFactory,
-            SamsungLanSessionClient samsungLanSessionClient
+            SamsungLanSessionClient samsungLanSessionClient,
+            SamsungOnboardingService samsungOnboardingService
     ) {
         this.remoteIntegrationProperties = remoteIntegrationProperties;
         this.samsungLanPayloadFactory = samsungLanPayloadFactory;
         this.samsungLanSessionClient = samsungLanSessionClient;
+        this.samsungOnboardingService = samsungOnboardingService;
     }
 
     @Override
@@ -46,7 +50,14 @@ public class SamsungLanRealProtocolClient implements ProtocolClient {
 
     @Override
     public ProtocolDispatchResult dispatch(RemoteDevice device, RemoteCommand command, ControlDecision decision, BrandDispatchPlan dispatchPlan) {
-        RemoteIntegrationProperties.Samsung samsung = remoteIntegrationProperties.samsung();
+        RemoteIntegrationProperties.Samsung configuredSamsung = remoteIntegrationProperties.samsung();
+        String negotiatedToken = samsungOnboardingService.latestNegotiatedToken(device.id());
+        RemoteIntegrationProperties.Samsung samsung = new RemoteIntegrationProperties.Samsung(
+                configuredSamsung.enabled(),
+                configuredSamsung.endpoint(),
+                negotiatedToken != null ? negotiatedToken : configuredSamsung.token(),
+                configuredSamsung.clientName()
+        );
         if (!samsung.enabled()) {
             throw new IllegalStateException("Samsung LAN real integration is disabled.");
         }
