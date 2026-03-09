@@ -7,17 +7,22 @@ import io.github.koyan9.tvremote.config.RemoteProjectProperties;
 import io.github.koyan9.tvremote.integration.ProtocolClientRegistry;
 import io.github.koyan9.tvremote.model.CommandRequest;
 import io.github.koyan9.tvremote.model.CommandResult;
+import io.github.koyan9.tvremote.model.DeviceRegistrationRequest;
 import io.github.koyan9.tvremote.model.DiscoveryResult;
+import io.github.koyan9.tvremote.model.HouseholdSummary;
 import io.github.koyan9.tvremote.model.RemoteDevice;
+import io.github.koyan9.tvremote.model.RoomSummary;
 import io.github.koyan9.tvremote.service.ControlExecutionService;
 import io.github.koyan9.tvremote.service.DeviceCatalogService;
 import io.github.koyan9.tvremote.service.DiscoveryService;
+import io.github.koyan9.tvremote.service.RemoteManagementService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.LinkedHashMap;
@@ -35,6 +40,7 @@ public class RemoteControlController {
     private final RemoteProjectProperties remoteProjectProperties;
     private final ProtocolClientRegistry protocolClientRegistry;
     private final RemoteIntegrationProperties remoteIntegrationProperties;
+    private final RemoteManagementService remoteManagementService;
 
     public RemoteControlController(
             DeviceCatalogService deviceCatalogService,
@@ -43,7 +49,8 @@ public class RemoteControlController {
             BrandAdapterRegistry brandAdapterRegistry,
             RemoteProjectProperties remoteProjectProperties,
             ProtocolClientRegistry protocolClientRegistry,
-            RemoteIntegrationProperties remoteIntegrationProperties
+            RemoteIntegrationProperties remoteIntegrationProperties,
+            RemoteManagementService remoteManagementService
     ) {
         this.deviceCatalogService = deviceCatalogService;
         this.discoveryService = discoveryService;
@@ -52,11 +59,27 @@ public class RemoteControlController {
         this.remoteProjectProperties = remoteProjectProperties;
         this.protocolClientRegistry = protocolClientRegistry;
         this.remoteIntegrationProperties = remoteIntegrationProperties;
+        this.remoteManagementService = remoteManagementService;
+    }
+
+    @GetMapping("/households")
+    public List<HouseholdSummary> households() {
+        return remoteManagementService.households();
+    }
+
+    @GetMapping("/rooms")
+    public List<RoomSummary> rooms(@RequestParam(required = false) String householdId) {
+        return remoteManagementService.rooms(householdId);
     }
 
     @GetMapping("/devices")
     public List<RemoteDevice> devices() {
         return deviceCatalogService.televisionDevices();
+    }
+
+    @PostMapping("/devices/register")
+    public RemoteDevice registerDevice(@Valid @RequestBody DeviceRegistrationRequest request) {
+        return remoteManagementService.registerDevice(request);
     }
 
     @GetMapping("/devices/{deviceId}")

@@ -9,8 +9,6 @@ import io.github.koyan9.tvremote.persistence.DeviceRepository;
 import io.github.koyan9.tvremote.persistence.HouseholdRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -19,34 +17,40 @@ public class DeviceCatalogService {
 
     private final DeviceRepository deviceRepository;
     private final HouseholdRepository householdRepository;
+    private final DeviceMapper deviceMapper;
 
-    public DeviceCatalogService(DeviceRepository deviceRepository, HouseholdRepository householdRepository) {
+    public DeviceCatalogService(
+            DeviceRepository deviceRepository,
+            HouseholdRepository householdRepository,
+            DeviceMapper deviceMapper
+    ) {
         this.deviceRepository = deviceRepository;
         this.householdRepository = householdRepository;
+        this.deviceMapper = deviceMapper;
     }
 
     public List<RemoteDevice> televisionDevices() {
         return deviceRepository.findAllByOrderBySortOrderAsc().stream()
-                .map(this::toDomain)
+                .map(deviceMapper::toDomain)
                 .filter(RemoteDevice::isTelevision)
                 .toList();
     }
 
     public List<RemoteDevice> allDevices() {
         return deviceRepository.findAllByOrderBySortOrderAsc().stream()
-                .map(this::toDomain)
+                .map(deviceMapper::toDomain)
                 .toList();
     }
 
     public RemoteDevice getDevice(String deviceId) {
         return deviceRepository.findById(deviceId)
-                .map(this::toDomain)
+                .map(deviceMapper::toDomain)
                 .orElseThrow(() -> new NoSuchElementException("Device not found: " + deviceId));
     }
 
-    public Collection<RemoteDevice> gateways() {
+    public List<RemoteDevice> gateways() {
         return deviceRepository.findAllByOrderBySortOrderAsc().stream()
-                .map(this::toDomain)
+                .map(deviceMapper::toDomain)
                 .filter(device -> device.deviceType() == DeviceType.GATEWAY)
                 .toList();
     }
@@ -63,33 +67,6 @@ public class DeviceCatalogService {
         return householdRepository.findFirstByOrderBySortOrderAsc()
                 .map(household -> household.getNetworkName())
                 .orElse("Unknown Network");
-    }
-
-    private RemoteDevice toDomain(DeviceEntity entity) {
-        return new RemoteDevice(
-                entity.getId(),
-                entity.getDisplayName(),
-                entity.getDeviceType(),
-                entity.getBrand(),
-                entity.getModel(),
-                entity.getRoom().getName(),
-                entity.isOnline(),
-                new LinkedHashSet<>(entity.getAvailablePaths()),
-                List.copyOf(entity.getLinkedGatewayIds()),
-                new DeviceCapability(
-                        entity.isSameWifiRequired(),
-                        entity.isRequiresPairing(),
-                        entity.isSupportsWakeOnLan(),
-                        new LinkedHashSet<>(entity.getSupportedCommands())
-                ),
-                new ModelProfile(
-                        entity.getBrand(),
-                        entity.getModel(),
-                        entity.getProfileMarketingName(),
-                        List.copyOf(entity.getPreferredPaths()),
-                        entity.getProfileNotes()
-                )
-        );
     }
 }
 
