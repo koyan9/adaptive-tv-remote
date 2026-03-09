@@ -5,17 +5,21 @@ import io.github.koyan9.tvremote.brand.BrandAdapterRegistry;
 import io.github.koyan9.tvremote.config.RemoteIntegrationProperties;
 import io.github.koyan9.tvremote.config.RemoteProjectProperties;
 import io.github.koyan9.tvremote.integration.ProtocolClientRegistry;
+import io.github.koyan9.tvremote.model.CandidateAdoptionRequest;
 import io.github.koyan9.tvremote.model.CommandRequest;
 import io.github.koyan9.tvremote.model.CommandResult;
 import io.github.koyan9.tvremote.model.DevicePairingRequest;
 import io.github.koyan9.tvremote.model.DevicePairingSummary;
 import io.github.koyan9.tvremote.model.DevicePairingUpdateRequest;
 import io.github.koyan9.tvremote.model.DeviceRegistrationRequest;
+import io.github.koyan9.tvremote.model.DiscoveryCandidateSummary;
 import io.github.koyan9.tvremote.model.DiscoveryResult;
 import io.github.koyan9.tvremote.model.HouseholdSummary;
+import io.github.koyan9.tvremote.model.PairingSuggestion;
 import io.github.koyan9.tvremote.model.RemoteDevice;
 import io.github.koyan9.tvremote.model.RoomSummary;
 import io.github.koyan9.tvremote.service.ControlExecutionService;
+import io.github.koyan9.tvremote.service.CandidateDiscoveryService;
 import io.github.koyan9.tvremote.service.DeviceCatalogService;
 import io.github.koyan9.tvremote.service.DiscoveryService;
 import io.github.koyan9.tvremote.service.PairingManagementService;
@@ -41,6 +45,7 @@ public class RemoteControlController {
     private final DeviceCatalogService deviceCatalogService;
     private final DiscoveryService discoveryService;
     private final ControlExecutionService controlExecutionService;
+    private final CandidateDiscoveryService candidateDiscoveryService;
     private final BrandAdapterRegistry brandAdapterRegistry;
     private final RemoteProjectProperties remoteProjectProperties;
     private final ProtocolClientRegistry protocolClientRegistry;
@@ -52,6 +57,7 @@ public class RemoteControlController {
             DeviceCatalogService deviceCatalogService,
             DiscoveryService discoveryService,
             ControlExecutionService controlExecutionService,
+            CandidateDiscoveryService candidateDiscoveryService,
             BrandAdapterRegistry brandAdapterRegistry,
             RemoteProjectProperties remoteProjectProperties,
             ProtocolClientRegistry protocolClientRegistry,
@@ -62,6 +68,7 @@ public class RemoteControlController {
         this.deviceCatalogService = deviceCatalogService;
         this.discoveryService = discoveryService;
         this.controlExecutionService = controlExecutionService;
+        this.candidateDiscoveryService = candidateDiscoveryService;
         this.brandAdapterRegistry = brandAdapterRegistry;
         this.remoteProjectProperties = remoteProjectProperties;
         this.protocolClientRegistry = protocolClientRegistry;
@@ -83,6 +90,26 @@ public class RemoteControlController {
     @GetMapping("/devices/{deviceId}/pairings")
     public List<DevicePairingSummary> pairings(@PathVariable String deviceId) {
         return pairingManagementService.pairingsForDevice(deviceId);
+    }
+
+    @GetMapping("/discovery/candidates")
+    public List<DiscoveryCandidateSummary> candidates(@RequestParam(required = false) io.github.koyan9.tvremote.domain.CandidateStatus status) {
+        return candidateDiscoveryService.candidates(status);
+    }
+
+    @PostMapping("/discovery/candidates/scan")
+    public List<DiscoveryCandidateSummary> scanCandidates() {
+        return candidateDiscoveryService.scanCandidates();
+    }
+
+    @GetMapping("/discovery/candidates/{candidateId}/pairing-suggestions")
+    public List<PairingSuggestion> pairingSuggestions(@PathVariable String candidateId) {
+        return candidateDiscoveryService.pairingSuggestions(candidateId);
+    }
+
+    @PostMapping("/discovery/candidates/{candidateId}/adopt")
+    public RemoteDevice adoptCandidate(@PathVariable String candidateId, @RequestBody CandidateAdoptionRequest request) {
+        return candidateDiscoveryService.adoptCandidate(candidateId, request);
     }
 
     @GetMapping("/devices")
