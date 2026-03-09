@@ -64,6 +64,8 @@ mvnw.cmd -q spring-boot:run
 - `POST /api/remote/devices/register`
 - `GET /api/remote/devices/{deviceId}/pairings`
 - `POST /api/remote/pairings`
+- `PATCH /api/remote/pairings/{pairingId}`
+- `DELETE /api/remote/pairings/{pairingId}`
 - `POST /api/remote/discovery/scan`
 - `POST /api/remote/devices/{deviceId}/commands`
 - `GET /api/remote/executions`
