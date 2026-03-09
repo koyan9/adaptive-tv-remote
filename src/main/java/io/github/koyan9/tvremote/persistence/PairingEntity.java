@@ -104,12 +104,24 @@ public class PairingEntity {
         return status;
     }
 
+    public void setStatus(PairingStatus status) {
+        this.status = status;
+    }
+
     public String getExternalReference() {
         return externalReference;
     }
 
+    public void setExternalReference(String externalReference) {
+        this.externalReference = externalReference;
+    }
+
     public String getNotes() {
         return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
     }
 
     public Instant getCreatedAt() {

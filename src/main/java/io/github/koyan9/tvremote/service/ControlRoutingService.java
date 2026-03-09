@@ -66,6 +66,10 @@ public class ControlRoutingService {
             }
         }
 
+        if (pairingManagementService.hasPairingRecords(device.id(), controlPath)) {
+            return null;
+        }
+
         if (preferredGatewayId != null && !preferredGatewayId.isBlank()) {
             try {
                 return deviceCatalogService.getGateway(preferredGatewayId);

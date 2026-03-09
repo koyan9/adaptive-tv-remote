@@ -9,6 +9,7 @@ import io.github.koyan9.tvremote.model.CommandRequest;
 import io.github.koyan9.tvremote.model.CommandResult;
 import io.github.koyan9.tvremote.model.DevicePairingRequest;
 import io.github.koyan9.tvremote.model.DevicePairingSummary;
+import io.github.koyan9.tvremote.model.DevicePairingUpdateRequest;
 import io.github.koyan9.tvremote.model.DeviceRegistrationRequest;
 import io.github.koyan9.tvremote.model.DiscoveryResult;
 import io.github.koyan9.tvremote.model.HouseholdSummary;
@@ -22,6 +23,7 @@ import io.github.koyan9.tvremote.service.RemoteManagementService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -96,6 +98,16 @@ public class RemoteControlController {
     @PostMapping("/pairings")
     public DevicePairingSummary createPairing(@Valid @RequestBody DevicePairingRequest request) {
         return pairingManagementService.createPairing(request);
+    }
+
+    @PatchMapping("/pairings/{pairingId}")
+    public DevicePairingSummary updatePairing(@PathVariable String pairingId, @RequestBody DevicePairingUpdateRequest request) {
+        return pairingManagementService.updatePairing(pairingId, request);
+    }
+
+    @org.springframework.web.bind.annotation.DeleteMapping("/pairings/{pairingId}")
+    public void revokePairing(@PathVariable String pairingId) {
+        pairingManagementService.revokePairing(pairingId);
     }
 
     @GetMapping("/devices/{deviceId}")

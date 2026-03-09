@@ -5,6 +5,7 @@ import io.github.koyan9.tvremote.domain.DeviceType;
 import io.github.koyan9.tvremote.domain.PairingStatus;
 import io.github.koyan9.tvremote.model.DevicePairingRequest;
 import io.github.koyan9.tvremote.model.DevicePairingSummary;
+import io.github.koyan9.tvremote.model.DevicePairingUpdateRequest;
 import io.github.koyan9.tvremote.persistence.DeviceEntity;
 import io.github.koyan9.tvremote.persistence.DeviceRepository;
 import io.github.koyan9.tvremote.persistence.PairingEntity;
@@ -43,6 +44,7 @@ public class PairingManagementService {
 
         DeviceEntity gatewayDevice = resolveGateway(targetDevice, request);
         ensureNotDuplicate(targetDevice, gatewayDevice, request.controlPath());
+        revokeOtherActivePairings(targetDevice, request.controlPath(), null);
 
         PairingEntity entity = pairingRepository.save(new PairingEntity(
                 UUID.randomUUID().toString(),
@@ -56,6 +58,36 @@ public class PairingManagementService {
                         : request.notes()
         ));
         return toSummary(entity);
+    }
+
+    @Transactional
+    public DevicePairingSummary updatePairing(String pairingId, DevicePairingUpdateRequest request) {
+        PairingEntity entity = pairingRepository.findById(pairingId)
+                .orElseThrow(() -> new NoSuchElementException("Pairing not found: " + pairingId));
+
+        if (request.status() != null) {
+            entity.setStatus(request.status());
+            if (request.status() == PairingStatus.ACTIVE) {
+                revokeOtherActivePairings(entity.getTargetDevice(), entity.getControlPath(), entity.getId());
+            }
+        }
+        if (request.externalReference() != null) {
+            entity.setExternalReference(request.externalReference());
+        }
+        if (request.notes() != null && !request.notes().isBlank()) {
+            entity.setNotes(request.notes());
+        }
+
+        return toSummary(pairingRepository.save(entity));
+    }
+
+    @Transactional
+    public void revokePairing(String pairingId) {
+        PairingEntity entity = pairingRepository.findById(pairingId)
+                .orElseThrow(() -> new NoSuchElementException("Pairing not found: " + pairingId));
+        entity.setStatus(PairingStatus.REVOKED);
+        entity.setNotes("Pairing revoked through the management API.");
+        pairingRepository.save(entity);
     }
 
     public String resolveGatewayForRouting(String deviceId, ControlPath controlPath, String preferredGatewayId) {
@@ -77,6 +109,10 @@ public class PairingManagementService {
                 .map(DeviceEntity::getId)
                 .findFirst()
                 .orElse(null);
+    }
+
+    public boolean hasPairingRecords(String deviceId, ControlPath controlPath) {
+        return pairingRepository.countByTargetDevice_IdAndControlPath(deviceId, controlPath) > 0;
     }
 
     private DeviceEntity verifyTargetDevice(String deviceId) {
@@ -126,6 +162,20 @@ public class PairingManagementService {
         if (duplicate) {
             throw new IllegalArgumentException("An active pairing already exists for device " + targetDevice.getId() + " on path " + controlPath);
         }
+    }
+
+    private void revokeOtherActivePairings(DeviceEntity targetDevice, ControlPath controlPath, String excludePairingId) {
+        pairingRepository.findAllByTargetDevice_IdAndControlPathAndStatusOrderByUpdatedAtDesc(
+                        targetDevice.getId(),
+                        controlPath,
+                        PairingStatus.ACTIVE
+                ).stream()
+                .filter(pairing -> excludePairingId == null || !pairing.getId().equals(excludePairingId))
+                .forEach(pairing -> {
+                    pairing.setStatus(PairingStatus.REVOKED);
+                    pairing.setNotes("Superseded by a newer active pairing.");
+                    pairingRepository.save(pairing);
+                });
     }
 
     private DevicePairingSummary toSummary(PairingEntity entity) {

@@ -8,8 +8,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.test.web.servlet.MvcResult;
+
 import static org.hamcrest.Matchers.hasItem;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -21,6 +27,9 @@ class RemotePairingControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Test
     void listsSeededPairingsForExistingDevice() throws Exception {
@@ -88,6 +97,157 @@ class RemotePairingControllerTest {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.route").value("IR_GATEWAY"))
+                .andExpect(jsonPath("$.gatewayDeviceId").value("gateway-home-hub"));
+    }
+
+    @Test
+    void revokesPairingAndBlocksImplicitGatewayFallbackForPairedPath() throws Exception {
+        mockMvc.perform(post("/api/remote/devices/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "deviceId": "tv-playroom",
+                                  "displayName": "Playroom TV",
+                                  "deviceType": "LEGACY_TV",
+                                  "brand": "Skyworth",
+                                  "model": "32E2A",
+                                  "householdId": "default-home",
+                                  "roomName": "Playroom",
+                                  "online": false,
+                                  "availablePaths": ["IR_GATEWAY"],
+                                  "linkedGatewayIds": ["gateway-home-hub"],
+                                  "sameWifiRequired": false,
+                                  "requiresPairing": false,
+                                  "supportsWakeOnLan": false,
+                                  "supportedCommands": ["POWER_TOGGLE", "HOME", "BACK", "DPAD_UP", "DPAD_DOWN", "DPAD_LEFT", "DPAD_RIGHT", "OK"],
+                                  "profileMarketingName": "Playroom Skyworth",
+                                  "preferredPaths": ["IR_GATEWAY"],
+                                  "profileNotes": "Registered for revoke test."
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        MvcResult pairingResult = mockMvc.perform(post("/api/remote/pairings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "deviceId": "tv-playroom",
+                                  "controlPath": "IR_GATEWAY",
+                                  "gatewayDeviceId": "gateway-home-hub",
+                                  "externalReference": "playroom-ir",
+                                  "notes": "Initial active pairing."
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode pairingJson = objectMapper.readTree(pairingResult.getResponse().getContentAsString());
+        String pairingId = pairingJson.get("id").asText();
+
+        mockMvc.perform(delete("/api/remote/pairings/{pairingId}", pairingId))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/remote/devices/tv-playroom/pairings"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].status").value("REVOKED"));
+
+        mockMvc.perform(post("/api/remote/devices/tv-playroom/commands")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "command": "HOME"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value("No viable control path is available for device Playroom TV"));
+    }
+
+    @Test
+    void activatesLatestPairingAndRevokesOlderPairingForSamePath() throws Exception {
+        mockMvc.perform(post("/api/remote/devices/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "deviceId": "gateway-bedroom-hub",
+                                  "displayName": "Bedroom Hub",
+                                  "deviceType": "GATEWAY",
+                                  "brand": "Koyan",
+                                  "model": "Home Hub Mini",
+                                  "householdId": "default-home",
+                                  "roomName": "Bedroom",
+                                  "online": true,
+                                  "availablePaths": ["IR_GATEWAY"],
+                                  "linkedGatewayIds": [],
+                                  "sameWifiRequired": false,
+                                  "requiresPairing": false,
+                                  "supportsWakeOnLan": false,
+                                  "supportedCommands": ["HOME", "BACK", "DPAD_UP", "DPAD_DOWN", "DPAD_LEFT", "DPAD_RIGHT", "OK"],
+                                  "profileMarketingName": "Bedroom Hub",
+                                  "preferredPaths": ["IR_GATEWAY"],
+                                  "profileNotes": "Registered as alternate gateway."
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        MvcResult firstPairing = mockMvc.perform(post("/api/remote/pairings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "deviceId": "tv-guest-room",
+                                  "controlPath": "IR_GATEWAY",
+                                  "gatewayDeviceId": "gateway-home-hub",
+                                  "externalReference": "guest-original",
+                                  "notes": "Original active pairing."
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+        MvcResult seededPairings = mockMvc.perform(get("/api/remote/devices/tv-guest-room/pairings"))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode seededArray = objectMapper.readTree(seededPairings.getResponse().getContentAsString());
+        String seededPairingId = seededArray.get(0).get("id").asText();
+
+        mockMvc.perform(post("/api/remote/pairings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "deviceId": "tv-guest-room",
+                                  "controlPath": "IR_GATEWAY",
+                                  "gatewayDeviceId": "gateway-bedroom-hub",
+                                  "externalReference": "guest-rebind",
+                                  "notes": "Rebound to bedroom hub."
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.gatewayDeviceId").value("gateway-bedroom-hub"))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
+
+        mockMvc.perform(get("/api/remote/devices/tv-guest-room/pairings"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].gatewayDeviceId", hasItem("gateway-bedroom-hub")));
+
+        mockMvc.perform(patch("/api/remote/pairings/{pairingId}", seededPairingId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "status": "ACTIVE",
+                                  "notes": "Reactivated original pairing."
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.gatewayDeviceId").value("gateway-home-hub"))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
+
+        mockMvc.perform(post("/api/remote/devices/tv-guest-room/commands")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "command": "HOME"
+                                }
+                                """))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.gatewayDeviceId").value("gateway-home-hub"));
     }
 }
