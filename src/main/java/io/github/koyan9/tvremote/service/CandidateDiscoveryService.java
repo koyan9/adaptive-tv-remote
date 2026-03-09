@@ -32,7 +32,7 @@ public class CandidateDiscoveryService {
     private final RemoteManagementService remoteManagementService;
     private final PairingManagementService pairingManagementService;
     private final DeviceCatalogService deviceCatalogService;
-    private final SamsungOnboardingService samsungOnboardingService;
+    private final BrandOnboardingRegistry brandOnboardingRegistry;
 
     public CandidateDiscoveryService(
             CandidateDeviceRepository candidateDeviceRepository,
@@ -41,7 +41,7 @@ public class CandidateDiscoveryService {
             RemoteManagementService remoteManagementService,
             PairingManagementService pairingManagementService,
             DeviceCatalogService deviceCatalogService,
-            SamsungOnboardingService samsungOnboardingService
+            BrandOnboardingRegistry brandOnboardingRegistry
     ) {
         this.candidateDeviceRepository = candidateDeviceRepository;
         this.householdRepository = householdRepository;
@@ -49,7 +49,7 @@ public class CandidateDiscoveryService {
         this.remoteManagementService = remoteManagementService;
         this.pairingManagementService = pairingManagementService;
         this.deviceCatalogService = deviceCatalogService;
-        this.samsungOnboardingService = samsungOnboardingService;
+        this.brandOnboardingRegistry = brandOnboardingRegistry;
     }
 
     @Transactional
@@ -133,8 +133,8 @@ public class CandidateDiscoveryService {
             createSuggestedPairings(device.id(), suggestions);
         }
 
-        if (Boolean.TRUE.equals(request.autoStartSamsungHandshake()) && isSamsungLanCandidate(candidate)) {
-            samsungOnboardingService.startHandshake(device.id(), candidate.getId());
+        if (Boolean.TRUE.equals(request.autoStartBrandOnboarding()) && supportsBrandOnboarding(candidate)) {
+            brandOnboardingRegistry.startForCandidate(device.id(), candidate);
         }
 
         candidate.setStatus(CandidateStatus.ADOPTED);
@@ -198,10 +198,9 @@ public class CandidateDiscoveryService {
                 .toLowerCase(Locale.ROOT);
     }
 
-    private boolean isSamsungLanCandidate(CandidateDeviceEntity candidate) {
-        return "Samsung".equalsIgnoreCase(candidate.getBrand())
-                && candidate.getAvailablePaths().contains(ControlPath.LAN_DIRECT)
-                && candidate.getPreferredPaths().contains(ControlPath.LAN_DIRECT);
+    private boolean supportsBrandOnboarding(CandidateDeviceEntity candidate) {
+        return candidate.getAvailablePaths().contains(ControlPath.LAN_DIRECT)
+                && ("Samsung".equalsIgnoreCase(candidate.getBrand()) || "LG".equalsIgnoreCase(candidate.getBrand()));
     }
 
     private DiscoveryCandidateSummary toSummary(CandidateDeviceEntity entity) {

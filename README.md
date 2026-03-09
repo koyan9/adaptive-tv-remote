@@ -17,7 +17,7 @@
 - 基于品牌和路径的适配器扩展点
 - 支持家庭、房间、设备、配对关系的持久化目录
 - 支持候选设备扫描、接管和配对建议流程
-- 支持 Samsung 候选设备接管后的配对握手结果持久化
+- 支持 Samsung / LG 候选设备接管后的品牌 onboarding 握手结果持久化
 - 内置设备发现、设备画像、配对关系和命令执行历史
 - 自带手机友好的网页遥控器界面
 - 支持 `mock / real skeleton` 按适配器切换
@@ -71,6 +71,7 @@ mvnw.cmd -q spring-boot:run
 - `POST /api/remote/devices/register`
 - `GET /api/remote/devices/{deviceId}/pairings`
 - `GET /api/remote/devices/{deviceId}/onboarding/samsung-handshakes`
+- `GET /api/remote/devices/{deviceId}/onboarding/sessions`
 - `POST /api/remote/pairings`
 - `PATCH /api/remote/pairings/{pairingId}`
 - `DELETE /api/remote/pairings/{pairingId}`

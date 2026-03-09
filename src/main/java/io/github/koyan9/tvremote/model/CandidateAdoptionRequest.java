@@ -6,10 +6,14 @@ public record CandidateAdoptionRequest(
         String roomId,
         String roomName,
         Boolean autoCreatePairings,
-        Boolean autoStartSamsungHandshake
+        Boolean autoStartSamsungHandshake,
+        Boolean autoStartBrandOnboarding
 ) {
     public CandidateAdoptionRequest {
         autoCreatePairings = autoCreatePairings == null ? Boolean.TRUE : autoCreatePairings;
-        autoStartSamsungHandshake = autoStartSamsungHandshake == null ? Boolean.TRUE : autoStartSamsungHandshake;
+        autoStartBrandOnboarding = autoStartBrandOnboarding == null
+                ? (autoStartSamsungHandshake == null ? Boolean.TRUE : autoStartSamsungHandshake)
+                : autoStartBrandOnboarding;
+        autoStartSamsungHandshake = autoStartSamsungHandshake == null ? autoStartBrandOnboarding : autoStartSamsungHandshake;
     }
 }

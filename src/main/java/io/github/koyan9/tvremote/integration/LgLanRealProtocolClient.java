@@ -5,15 +5,21 @@ import io.github.koyan9.tvremote.config.RemoteIntegrationProperties;
 import io.github.koyan9.tvremote.domain.RemoteCommand;
 import io.github.koyan9.tvremote.model.ControlDecision;
 import io.github.koyan9.tvremote.model.RemoteDevice;
+import io.github.koyan9.tvremote.service.BrandOnboardingRegistry;
 import org.springframework.stereotype.Component;
 
 @Component
 public class LgLanRealProtocolClient implements ProtocolClient {
 
     private final RemoteIntegrationProperties remoteIntegrationProperties;
+    private final BrandOnboardingRegistry brandOnboardingRegistry;
 
-    public LgLanRealProtocolClient(RemoteIntegrationProperties remoteIntegrationProperties) {
+    public LgLanRealProtocolClient(
+            RemoteIntegrationProperties remoteIntegrationProperties,
+            BrandOnboardingRegistry brandOnboardingRegistry
+    ) {
         this.remoteIntegrationProperties = remoteIntegrationProperties;
+        this.brandOnboardingRegistry = brandOnboardingRegistry;
     }
 
     @Override
@@ -38,7 +44,13 @@ public class LgLanRealProtocolClient implements ProtocolClient {
 
     @Override
     public ProtocolDispatchResult dispatch(RemoteDevice device, RemoteCommand command, ControlDecision decision, BrandDispatchPlan dispatchPlan) {
-        RemoteIntegrationProperties.Lg lg = remoteIntegrationProperties.lg();
+        RemoteIntegrationProperties.Lg configuredLg = remoteIntegrationProperties.lg();
+        String negotiatedClientKey = brandOnboardingRegistry.latestNegotiatedCredential(device.id(), "LG");
+        RemoteIntegrationProperties.Lg lg = new RemoteIntegrationProperties.Lg(
+                configuredLg.enabled(),
+                configuredLg.endpoint(),
+                negotiatedClientKey != null ? negotiatedClientKey : configuredLg.clientKey()
+        );
         if (!lg.enabled()) {
             throw new IllegalStateException("LG LAN real integration is disabled.");
         }

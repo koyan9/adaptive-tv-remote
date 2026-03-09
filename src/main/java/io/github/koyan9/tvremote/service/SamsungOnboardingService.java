@@ -5,7 +5,9 @@ import io.github.koyan9.tvremote.integration.SamsungLanHandshakeClient;
 import io.github.koyan9.tvremote.integration.SamsungLanHandshakeRequest;
 import io.github.koyan9.tvremote.integration.SamsungLanHandshakeRequestFactory;
 import io.github.koyan9.tvremote.integration.SamsungLanHandshakeResult;
+import io.github.koyan9.tvremote.model.BrandOnboardingSessionSummary;
 import io.github.koyan9.tvremote.model.SamsungHandshakeSummary;
+import io.github.koyan9.tvremote.persistence.CandidateDeviceEntity;
 import io.github.koyan9.tvremote.persistence.DeviceEntity;
 import io.github.koyan9.tvremote.persistence.DeviceRepository;
 import io.github.koyan9.tvremote.persistence.SamsungHandshakeEntity;
@@ -18,7 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class SamsungOnboardingService {
+public class SamsungOnboardingService implements BrandOnboardingProvider {
 
     private final DeviceRepository deviceRepository;
     private final SamsungHandshakeRepository samsungHandshakeRepository;
@@ -61,6 +63,37 @@ public class SamsungOnboardingService {
         return toSummary(entity);
     }
 
+    @Override
+    public String providerId() {
+        return "samsung-lan-onboarding";
+    }
+
+    @Override
+    public String brand() {
+        return "Samsung";
+    }
+
+    @Override
+    public boolean supportsCandidate(CandidateDeviceEntity candidate) {
+        return "Samsung".equalsIgnoreCase(candidate.getBrand())
+                && candidate.getAvailablePaths().contains(io.github.koyan9.tvremote.domain.ControlPath.LAN_DIRECT);
+    }
+
+    @Override
+    public BrandOnboardingSessionSummary startOnboarding(String deviceId, String candidateId) {
+        return toGenericSummary(startHandshake(deviceId, candidateId));
+    }
+
+    @Override
+    public List<BrandOnboardingSessionSummary> sessions(String deviceId) {
+        return handshakes(deviceId).stream().map(this::toGenericSummary).toList();
+    }
+
+    @Override
+    public String latestNegotiatedCredential(String deviceId) {
+        return latestNegotiatedToken(deviceId);
+    }
+
     public List<SamsungHandshakeSummary> handshakes(String deviceId) {
         return samsungHandshakeRepository.findAllByDevice_IdOrderByUpdatedAtDesc(deviceId).stream()
                 .map(this::toSummary)
@@ -87,6 +120,24 @@ public class SamsungOnboardingService {
                 entity.getDetail(),
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
+        );
+    }
+
+    private BrandOnboardingSessionSummary toGenericSummary(SamsungHandshakeSummary summary) {
+        return new BrandOnboardingSessionSummary(
+                summary.id(),
+                providerId(),
+                brand(),
+                summary.deviceId(),
+                summary.deviceName(),
+                summary.candidateId(),
+                summary.endpoint(),
+                summary.clientName(),
+                summary.negotiatedToken(),
+                summary.status().name(),
+                summary.detail(),
+                summary.createdAt(),
+                summary.updatedAt()
         );
     }
 }
