@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: adaptive-tv-remote
+  mvc:
+    problemdetails:
+      enabled: true
+
+server:
+  error:
+    include-message: always
+
+remote:
+  project:
+    name: Adaptive TV Remote
+    standalone: true
+    current-mode: standalone-spring-boot-pwa
+    target-clients:
+      - mobile-web
+      - android-shell
+      - ios-shell
+    note: Independent TV remote project inside the workspace, intentionally separated from the existing OSS library modules.
+  integration:
+    default-mode: mock
+    adapter-modes: {}
+    samsung:
+      enabled: true
+      endpoint: ws://192.168.50.21:8001/api/v2/channels/samsung.remote.control
+      token: demo-samsung-token
+    sony:
+      enabled: true
+      endpoint: http://192.168.50.41/sony/accessControl
+      pre-shared-key: demo-psk
+    lg:
+      enabled: true
+      endpoint: ws://192.168.50.31:3000
+      client-key: demo-lg-client-key
+    gateway:
+      enabled: true
+      endpoint: http://gateway.local
+      infrared-endpoint: http://gateway.local/api/infrared/send
+      hdmi-cec-endpoint: http://gateway.local/api/cec/send
+      hub-id: hub-one-demo
+      auth-token: demo-gateway-token
+
+

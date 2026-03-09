@@ -1,0 +1,73 @@
+package io.github.koyan9.tvremote.service;
+
+import io.github.koyan9.tvremote.domain.ControlPath;
+import io.github.koyan9.tvremote.model.ControlDecision;
+import io.github.koyan9.tvremote.model.RemoteDevice;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+public class ControlRoutingService {
+
+    private final DeviceCatalogService deviceCatalogService;
+
+    public ControlRoutingService(DeviceCatalogService deviceCatalogService) {
+        this.deviceCatalogService = deviceCatalogService;
+    }
+
+    public ControlDecision chooseRoute(RemoteDevice device, String preferredGatewayId) {
+        List<ControlPath> attempted = new ArrayList<>();
+        for (ControlPath candidate : device.profile().preferredPaths()) {
+            attempted.add(candidate);
+            if (!device.availablePaths().contains(candidate)) {
+                continue;
+            }
+
+            if (candidate == ControlPath.LAN_DIRECT && device.online()) {
+                return new ControlDecision(
+                        ControlPath.LAN_DIRECT,
+                        null,
+                        "LAN Direct Adapter",
+                        attempted,
+                        "The TV is online on the home Wi-Fi, so the app uses direct local control."
+                );
+            }
+
+            if (candidate == ControlPath.IR_GATEWAY || candidate == ControlPath.HDMI_CEC_GATEWAY) {
+                RemoteDevice gateway = resolveGateway(device, preferredGatewayId);
+                if (gateway != null && gateway.online() && gateway.availablePaths().contains(candidate)) {
+                    return new ControlDecision(
+                            candidate,
+                            gateway.id(),
+                            candidate == ControlPath.IR_GATEWAY ? "Infrared Gateway Adapter" : "HDMI-CEC Gateway Adapter",
+                            attempted,
+                            "Direct control is unavailable, so the request falls back to the paired home gateway."
+                    );
+                }
+            }
+        }
+
+        throw new ControlRoutingException("No viable control path is available for device " + device.displayName());
+    }
+
+    private RemoteDevice resolveGateway(RemoteDevice device, String preferredGatewayId) {
+        if (preferredGatewayId != null && !preferredGatewayId.isBlank()) {
+            try {
+                return deviceCatalogService.getGateway(preferredGatewayId);
+            } catch (Exception ignored) {
+            }
+        }
+
+        for (String gatewayId : device.linkedGatewayIds()) {
+            try {
+                return deviceCatalogService.getGateway(gatewayId);
+            } catch (Exception ignored) {
+            }
+        }
+        return null;
+    }
+}
+
+

@@ -1,0 +1,12 @@
+target/
+.m2/
+.m2.corrupted/
+.idea/
+.vscode/
+*.iml
+*.log
+.DS_Store
+Thumbs.db
+
+
+

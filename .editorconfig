@@ -1,0 +1,22 @@
+root = true
+
+[*.{java,js,css,md,yml,xml}]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.java]
+indent_style = space
+indent_size = 4
+
+[*.{js,css,yml,md}]
+indent_style = space
+indent_size = 2
+
+[pom.xml]
+indent_style = space
+indent_size = 4
+
+
+
