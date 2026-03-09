@@ -26,6 +26,7 @@ remote:
       enabled: true
       endpoint: ws://192.168.50.21:8001/api/v2/channels/samsung.remote.control
       token: demo-samsung-token
+      client-name: Adaptive TV Remote
     sony:
       enabled: true
       endpoint: http://192.168.50.41/sony/accessControl

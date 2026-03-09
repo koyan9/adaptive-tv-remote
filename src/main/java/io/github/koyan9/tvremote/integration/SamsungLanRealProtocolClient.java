@@ -11,9 +11,17 @@ import org.springframework.stereotype.Component;
 public class SamsungLanRealProtocolClient implements ProtocolClient {
 
     private final RemoteIntegrationProperties remoteIntegrationProperties;
+    private final SamsungLanPayloadFactory samsungLanPayloadFactory;
+    private final SamsungLanSessionClient samsungLanSessionClient;
 
-    public SamsungLanRealProtocolClient(RemoteIntegrationProperties remoteIntegrationProperties) {
+    public SamsungLanRealProtocolClient(
+            RemoteIntegrationProperties remoteIntegrationProperties,
+            SamsungLanPayloadFactory samsungLanPayloadFactory,
+            SamsungLanSessionClient samsungLanSessionClient
+    ) {
         this.remoteIntegrationProperties = remoteIntegrationProperties;
+        this.samsungLanPayloadFactory = samsungLanPayloadFactory;
+        this.samsungLanSessionClient = samsungLanSessionClient;
     }
 
     @Override
@@ -28,7 +36,7 @@ public class SamsungLanRealProtocolClient implements ProtocolClient {
 
     @Override
     public String description() {
-        return "Real-protocol skeleton for Samsung LAN control with configurable endpoint and token.";
+        return "First real-request Samsung LAN client using WebSocket command encoding with configurable endpoint, token, and client name.";
     }
 
     @Override
@@ -45,12 +53,18 @@ public class SamsungLanRealProtocolClient implements ProtocolClient {
         if (samsung.endpoint() == null || samsung.endpoint().isBlank()) {
             throw new IllegalStateException("Samsung LAN real integration endpoint is missing.");
         }
+        if (samsung.clientName() == null || samsung.clientName().isBlank()) {
+            throw new IllegalStateException("Samsung LAN client name is missing.");
+        }
+
+        SamsungLanCommandRequest request = samsungLanPayloadFactory.create(samsung, command);
+        SamsungLanSessionResult sessionResult = samsungLanSessionClient.sendCommand(request);
 
         return new ProtocolDispatchResult(
                 clientKey(),
                 integrationMode(),
-                samsung.endpoint(),
-                "Prepared a Samsung LAN request skeleton for " + command + " using token " + samsung.token() + "."
+                sessionResult.endpoint().toString(),
+                sessionResult.detail()
         );
     }
 }

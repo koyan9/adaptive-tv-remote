@@ -17,7 +17,7 @@ public record RemoteIntegrationProperties(
     public RemoteIntegrationProperties {
         defaultMode = defaultMode == null || defaultMode.isBlank() ? "mock" : defaultMode;
         adapterModes = adapterModes == null ? Map.of() : Map.copyOf(adapterModes);
-        samsung = samsung == null ? new Samsung(true, "ws://192.168.50.21:8001/api/v2/channels/samsung.remote.control", "demo-samsung-token") : samsung;
+        samsung = samsung == null ? new Samsung(true, "ws://192.168.50.21:8001/api/v2/channels/samsung.remote.control", "demo-samsung-token", "Adaptive TV Remote") : samsung;
         sony = sony == null ? new Sony(true, "http://192.168.50.41/sony/accessControl", "demo-psk") : sony;
         lg = lg == null ? new Lg(true, "ws://192.168.50.31:3000", "demo-lg-client-key") : lg;
         gateway = gateway == null ? new Gateway(
@@ -37,7 +37,8 @@ public record RemoteIntegrationProperties(
     public record Samsung(
             boolean enabled,
             String endpoint,
-            String token
+            String token,
+            String clientName
     ) {
     }
 
