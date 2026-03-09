@@ -35,6 +35,11 @@
                 <h2>Candidate Devices</h2>
                 <span id="candidateBadge" class="badge muted">No candidates</span>
             </div>
+            <div class="filter-row">
+                <button id="candidateFilterDiscovered" class="filter-chip is-active" type="button">Discovered</button>
+                <button id="candidateFilterAdopted" class="filter-chip" type="button">Adopted</button>
+                <button id="candidateFilterAll" class="filter-chip" type="button">All</button>
+            </div>
             <div id="candidateList" class="candidate-list"></div>
         </section>
 
@@ -89,13 +94,54 @@
                     <h2>Guided Setup</h2>
                     <span id="candidateState" class="badge muted">No candidate</span>
                 </div>
+
+                <div class="wizard-steps" id="wizardSteps">
+                    <div class="wizard-step" data-step="scan">
+                        <span class="wizard-dot">1</span>
+                        <div>
+                            <strong>Scan</strong>
+                            <span>Discover nearby devices</span>
+                        </div>
+                    </div>
+                    <div class="wizard-step" data-step="review">
+                        <span class="wizard-dot">2</span>
+                        <div>
+                            <strong>Review</strong>
+                            <span>Inspect the candidate</span>
+                        </div>
+                    </div>
+                    <div class="wizard-step" data-step="suggestions">
+                        <span class="wizard-dot">3</span>
+                        <div>
+                            <strong>Suggest</strong>
+                            <span>Choose the best route</span>
+                        </div>
+                    </div>
+                    <div class="wizard-step" data-step="adopted">
+                        <span class="wizard-dot">4</span>
+                        <div>
+                            <strong>Adopted</strong>
+                            <span>Use the new device</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="guide-header">
                     <div>
                         <strong id="candidateName">Select a candidate</strong>
                         <p id="candidateMeta" class="muted">Scan the home to discover candidate TVs and projectors that can be adopted into the device catalog.</p>
                     </div>
-                    <button id="adoptCandidateButton" class="scan-button small" type="button" disabled>Adopt Candidate</button>
+                    <div class="guide-actions">
+                        <button id="refreshSuggestionsButton" class="scan-button ghost small" type="button" disabled>Refresh suggestions</button>
+                        <button id="adoptCandidateButton" class="scan-button small" type="button" disabled>Adopt Candidate</button>
+                    </div>
                 </div>
+
+                <div id="guideSuccessBanner" class="success-banner hidden">
+                    <strong id="guideSuccessTitle">Candidate adopted</strong>
+                    <p id="guideSuccessMessage">The device is now available in the catalog and ready for onboarding-aware control.</p>
+                </div>
+
                 <div id="candidateSummary" class="guide-summary muted">No candidate selected.</div>
                 <div id="candidateSuggestions" class="suggestion-list"></div>
             </section>

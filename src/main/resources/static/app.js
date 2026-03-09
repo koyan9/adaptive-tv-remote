@@ -1,11 +1,13 @@
 ﻿const state = {
   devices: [],
   candidates: [],
+  candidateFilter: "DISCOVERED",
   selectedDeviceId: null,
   selectedCandidateId: null,
   candidateSuggestions: [],
   executions: [],
-  onboardingStatus: null
+  onboardingStatus: null,
+  adoptionSuccess: null
 };
 
 const els = {
@@ -17,6 +19,7 @@ const els = {
   activityLog: document.getElementById("activityLog"),
   scanButton: document.getElementById("scanButton"),
   scanCandidatesButton: document.getElementById("scanCandidatesButton"),
+  refreshSuggestionsButton: document.getElementById("refreshSuggestionsButton"),
   networkBadge: document.getElementById("networkBadge"),
   candidateBadge: document.getElementById("candidateBadge"),
   deviceName: document.getElementById("deviceName"),
@@ -36,7 +39,14 @@ const els = {
   candidateMeta: document.getElementById("candidateMeta"),
   candidateSummary: document.getElementById("candidateSummary"),
   candidateSuggestions: document.getElementById("candidateSuggestions"),
-  adoptCandidateButton: document.getElementById("adoptCandidateButton")
+  adoptCandidateButton: document.getElementById("adoptCandidateButton"),
+  guideSuccessBanner: document.getElementById("guideSuccessBanner"),
+  guideSuccessTitle: document.getElementById("guideSuccessTitle"),
+  guideSuccessMessage: document.getElementById("guideSuccessMessage"),
+  wizardSteps: [...document.querySelectorAll(".wizard-step")],
+  candidateFilterDiscovered: document.getElementById("candidateFilterDiscovered"),
+  candidateFilterAdopted: document.getElementById("candidateFilterAdopted"),
+  candidateFilterAll: document.getElementById("candidateFilterAll")
 };
 
 const commandButtons = [...document.querySelectorAll("[data-command]")];
@@ -70,6 +80,29 @@ function getSelectedCandidate() {
   return state.candidates.find(candidate => candidate.id === state.selectedCandidateId) || null;
 }
 
+function visibleCandidates() {
+  if (state.candidateFilter === "ALL") {
+    return state.candidates;
+  }
+  return state.candidates.filter(candidate => candidate.status === state.candidateFilter);
+}
+
+function wizardStep() {
+  const candidate = getSelectedCandidate();
+  if (!state.candidates.length) return "scan";
+  if (!candidate) return "review";
+  if (candidate.status === "ADOPTED") return "adopted";
+  if (state.candidateSuggestions.length > 0) return "suggestions";
+  return "review";
+}
+
+function syncCandidateSelection() {
+  const candidates = visibleCandidates();
+  if (!candidates.find(candidate => candidate.id === state.selectedCandidateId)) {
+    state.selectedCandidateId = candidates.length ? candidates[0].id : null;
+  }
+}
+
 async function loadDevices() {
   state.devices = await api("/api/remote/devices");
   if (!state.selectedDeviceId && state.devices.length > 0) {
@@ -81,9 +114,7 @@ async function loadDevices() {
 
 async function loadCandidates() {
   state.candidates = await api("/api/remote/discovery/candidates");
-  if (!state.selectedCandidateId && state.candidates.length > 0) {
-    state.selectedCandidateId = state.candidates[0].id;
-  }
+  syncCandidateSelection();
   renderCandidates();
   await refreshSelectedCandidate();
 }
@@ -103,10 +134,7 @@ async function scanHome() {
 async function scanCandidates() {
   els.candidateBadge.textContent = "Scanning…";
   state.candidates = await api("/api/remote/discovery/candidates/scan", { method: "POST" });
-  els.candidateBadge.textContent = `${state.candidates.length} candidates`;
-  if (!state.candidates.find(candidate => candidate.id === state.selectedCandidateId) && state.candidates.length > 0) {
-    state.selectedCandidateId = state.candidates[0].id;
-  }
+  syncCandidateSelection();
   renderCandidates();
   await refreshSelectedCandidate();
 }
@@ -154,6 +182,7 @@ async function refreshSelectedCandidate() {
   renderCandidateGuideBase();
   await loadCandidateSuggestions();
   renderCandidateGuide();
+  renderWizardSteps();
 }
 
 function renderDevices() {
@@ -181,17 +210,23 @@ function renderDevices() {
 
 function renderCandidates() {
   els.candidateList.innerHTML = "";
-  if (state.candidates.length === 0) {
+  const candidates = visibleCandidates();
+
+  if (candidates.length === 0) {
     const empty = document.createElement("p");
     empty.className = "muted";
-    empty.textContent = "No candidate devices yet. Use Find candidates to scan the home.";
+    empty.textContent = state.candidateFilter === "DISCOVERED"
+      ? "No discovered candidates. Use Find candidates to scan the home."
+      : state.candidateFilter === "ADOPTED"
+        ? "No adopted candidates yet."
+        : "No candidates available.";
     els.candidateList.appendChild(empty);
     els.candidateBadge.textContent = "No candidates";
     return;
   }
 
-  els.candidateBadge.textContent = `${state.candidates.length} candidates`;
-  state.candidates.forEach(candidate => {
+  els.candidateBadge.textContent = `${candidates.length} candidates`;
+  candidates.forEach(candidate => {
     const fragment = els.candidateTemplate.content.cloneNode(true);
     const button = fragment.querySelector("button");
     button.classList.toggle("is-selected", candidate.id === state.selectedCandidateId);
@@ -285,6 +320,12 @@ function renderOnboardingStatus() {
 
 function renderCandidateGuideBase() {
   const candidate = getSelectedCandidate();
+  els.guideSuccessBanner.classList.toggle("hidden", !state.adoptionSuccess);
+  if (state.adoptionSuccess) {
+    els.guideSuccessTitle.textContent = `${state.adoptionSuccess.displayName} adopted`;
+    els.guideSuccessMessage.textContent = `${state.adoptionSuccess.displayName} is now part of the device catalog as ${state.adoptionSuccess.deviceId}.`;
+  }
+
   if (!candidate) {
     els.candidateState.textContent = "No candidate";
     els.candidateName.textContent = "Select a candidate";
@@ -292,6 +333,7 @@ function renderCandidateGuideBase() {
     els.candidateSummary.textContent = "No candidate selected.";
     els.candidateSuggestions.innerHTML = "";
     els.adoptCandidateButton.disabled = true;
+    els.refreshSuggestionsButton.disabled = true;
     return;
   }
 
@@ -302,6 +344,7 @@ function renderCandidateGuideBase() {
     ? "This candidate is online and ready for direct onboarding or adaptive fallback."
     : "This candidate is offline and may need gateway-assisted onboarding.";
   els.adoptCandidateButton.disabled = candidate.status !== "DISCOVERED";
+  els.refreshSuggestionsButton.disabled = false;
 }
 
 function renderCandidateGuide() {
@@ -315,7 +358,9 @@ function renderCandidateGuide() {
   if (state.candidateSuggestions.length === 0) {
     const empty = document.createElement("p");
     empty.className = "muted";
-    empty.textContent = "No pairing suggestions available for this candidate yet.";
+    empty.textContent = wizardStep() === "review"
+      ? "Refresh suggestions to evaluate the best path for this candidate."
+      : "No pairing suggestions available for this candidate yet.";
     els.candidateSuggestions.appendChild(empty);
     return;
   }
@@ -326,13 +371,30 @@ function renderCandidateGuide() {
     card.innerHTML = `
       <div class="suggestion-top">
         <strong>${prettyLabel(suggestion.controlPath)}</strong>
-        <span class="badge muted">${suggestion.autoSelectable ? "Auto" : "Manual"}</span>
+        <span class="badge muted">${suggestion.autoSelectable ? "Recommended" : "Manual"}</span>
       </div>
       <p class="muted">${suggestion.rationale}</p>
       <div class="suggestion-meta">${suggestion.gatewayDeviceName || "Direct LAN onboarding"}</div>
     `;
     els.candidateSuggestions.appendChild(card);
   });
+}
+
+function renderWizardSteps() {
+  const current = wizardStep();
+  const order = ["scan", "review", "suggestions", "adopted"];
+  const currentIndex = order.indexOf(current);
+  els.wizardSteps.forEach(step => {
+    const stepIndex = order.indexOf(step.dataset.step);
+    step.classList.toggle("is-active", step.dataset.step === current);
+    step.classList.toggle("is-complete", stepIndex < currentIndex);
+  });
+}
+
+async function refreshSuggestions() {
+  await loadCandidateSuggestions();
+  renderCandidateGuide();
+  renderWizardSteps();
 }
 
 async function adoptSelectedCandidate() {
@@ -355,6 +417,7 @@ async function adoptSelectedCandidate() {
       body: JSON.stringify(payload)
     });
 
+    state.adoptionSuccess = { displayName: adopted.displayName, deviceId: adopted.id };
     await Promise.all([loadDevices(), loadCandidates(), loadExecutions()]);
     state.selectedDeviceId = adopted.id;
     renderDevices();
@@ -426,6 +489,16 @@ function prettyLabel(label) {
   return label.toLowerCase().replaceAll("_", " ").replace(/\b\w/g, char => char.toUpperCase());
 }
 
+function setCandidateFilter(filter) {
+  state.candidateFilter = filter;
+  els.candidateFilterDiscovered.classList.toggle("is-active", filter === "DISCOVERED");
+  els.candidateFilterAdopted.classList.toggle("is-active", filter === "ADOPTED");
+  els.candidateFilterAll.classList.toggle("is-active", filter === "ALL");
+  syncCandidateSelection();
+  renderCandidates();
+  refreshSelectedCandidate();
+}
+
 commandButtons.forEach(button => {
   button.addEventListener("click", () => sendCommand(button.dataset.command));
 });
@@ -446,7 +519,11 @@ els.scanCandidatesButton.addEventListener("click", async () => {
   }
 });
 
+els.refreshSuggestionsButton.addEventListener("click", refreshSuggestions);
 els.adoptCandidateButton.addEventListener("click", adoptSelectedCandidate);
+els.candidateFilterDiscovered.addEventListener("click", () => setCandidateFilter("DISCOVERED"));
+els.candidateFilterAdopted.addEventListener("click", () => setCandidateFilter("ADOPTED"));
+els.candidateFilterAll.addEventListener("click", () => setCandidateFilter("ALL"));
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
