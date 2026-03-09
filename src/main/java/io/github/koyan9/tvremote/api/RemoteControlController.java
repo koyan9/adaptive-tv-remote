@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -85,34 +86,34 @@ public class RemoteControlController {
 
     @GetMapping("/integrations")
     public Map<String, Object> integrations() {
-        return Map.of(
-                "defaultMode", remoteIntegrationProperties.modeFor("__default__"),
-                "configuredAdapterModes", remoteIntegrationProperties.adapterModes(),
-                "registeredClients", protocolClientRegistry.descriptors(),
-                "samsungEndpoint", remoteIntegrationProperties.samsung().endpoint(),
-                "sonyEndpoint", remoteIntegrationProperties.sony().endpoint(),
-                "lgEndpoint", remoteIntegrationProperties.lg().endpoint(),
-                "gatewayEndpoint", remoteIntegrationProperties.gateway().endpoint(),
-                "gatewayInfraredEndpoint", remoteIntegrationProperties.gateway().infraredEndpoint(),
-                "gatewayHdmiCecEndpoint", remoteIntegrationProperties.gateway().hdmiCecEndpoint(),
-                "gatewayHubId", remoteIntegrationProperties.gateway().hubId()
-        );
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("defaultMode", remoteIntegrationProperties.modeFor("__default__"));
+        payload.put("configuredAdapterModes", remoteIntegrationProperties.adapterModes());
+        payload.put("registeredClients", protocolClientRegistry.descriptors());
+        payload.put("samsungEndpoint", remoteIntegrationProperties.samsung().endpoint());
+        payload.put("sonyEndpoint", remoteIntegrationProperties.sony().endpoint());
+        payload.put("lgEndpoint", remoteIntegrationProperties.lg().endpoint());
+        payload.put("gatewayEndpoint", remoteIntegrationProperties.gateway().endpoint());
+        payload.put("gatewayInfraredEndpoint", remoteIntegrationProperties.gateway().infraredEndpoint());
+        payload.put("gatewayHdmiCecEndpoint", remoteIntegrationProperties.gateway().hdmiCecEndpoint());
+        payload.put("gatewayHubId", remoteIntegrationProperties.gateway().hubId());
+        return payload;
     }
 
     @GetMapping("/profile")
     public Map<String, Object> profile() {
-        return Map.of(
-                "projectName", remoteProjectProperties.name(),
-                "standalone", remoteProjectProperties.standalone(),
-                "currentMode", remoteProjectProperties.currentMode(),
-                "targetClients", remoteProjectProperties.targetClients(),
-                "note", remoteProjectProperties.note(),
-                "controlPaths", List.of("LAN_DIRECT", "IR_GATEWAY", "HDMI_CEC_GATEWAY"),
-                "strategy", "auto-route with direct LAN priority and gateway fallback",
-                "brandAdapters", brandAdapterRegistry.descriptors(),
-                "protocolClients", protocolClientRegistry.descriptors(),
-                "defaultIntegrationMode", remoteIntegrationProperties.modeFor("__default__")
-        );
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("projectName", remoteProjectProperties.name());
+        payload.put("standalone", remoteProjectProperties.standalone());
+        payload.put("currentMode", remoteProjectProperties.currentMode());
+        payload.put("targetClients", remoteProjectProperties.targetClients());
+        payload.put("note", remoteProjectProperties.note());
+        payload.put("controlPaths", List.of("LAN_DIRECT", "IR_GATEWAY", "HDMI_CEC_GATEWAY"));
+        payload.put("strategy", "auto-route with direct LAN priority and gateway fallback");
+        payload.put("brandAdapters", brandAdapterRegistry.descriptors());
+        payload.put("protocolClients", protocolClientRegistry.descriptors());
+        payload.put("defaultIntegrationMode", remoteIntegrationProperties.modeFor("__default__"));
+        return payload;
     }
 }
 

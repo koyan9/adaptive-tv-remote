@@ -4,30 +4,20 @@ import io.github.koyan9.tvremote.domain.ControlPath;
 import io.github.koyan9.tvremote.domain.RemoteCommand;
 import io.github.koyan9.tvremote.model.RemoteDevice;
 import io.github.koyan9.tvremote.service.DeviceCatalogService;
-import io.github.koyan9.tvremote.service.ModelProfileService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SpringBootTest
 class BrandAdapterRegistryTest {
 
+    @Autowired
     private DeviceCatalogService deviceCatalogService;
-    private BrandAdapterRegistry brandAdapterRegistry;
 
-    @BeforeEach
-    void setUp() {
-        deviceCatalogService = new DeviceCatalogService(new ModelProfileService());
-        brandAdapterRegistry = new BrandAdapterRegistry(List.of(
-                new SamsungLanBrandAdapter(),
-                new LgLanBrandAdapter(),
-                new SonyLanBrandAdapter(),
-                new GenericInfraredBrandAdapter(),
-                new GenericHdmiCecBrandAdapter()
-        ));
-    }
+    @Autowired
+    private BrandAdapterRegistry brandAdapterRegistry;
 
     @Test
     void prefersBrandSpecificAdapterWhenAvailable() {

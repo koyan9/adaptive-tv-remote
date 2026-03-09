@@ -1,6 +1,9 @@
 target/
 .m2/
 .m2.corrupted/
+data/
+*.mv.db
+*.trace.db
 .idea/
 .vscode/
 *.iml

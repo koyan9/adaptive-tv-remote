@@ -16,7 +16,7 @@ public class DiscoveryService {
 
     public DiscoveryResult scanHomeNetwork() {
         return new DiscoveryResult(
-                "Koyan Home Mesh",
+                deviceCatalogService.primaryHouseholdNetworkName(),
                 Instant.now(),
                 deviceCatalogService.allDevices()
         );

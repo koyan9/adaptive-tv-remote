@@ -3,21 +3,20 @@ package io.github.koyan9.tvremote.service;
 import io.github.koyan9.tvremote.domain.ControlPath;
 import io.github.koyan9.tvremote.model.ControlDecision;
 import io.github.koyan9.tvremote.model.RemoteDevice;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SpringBootTest
 class ControlRoutingServiceTest {
 
+    @Autowired
     private DeviceCatalogService deviceCatalogService;
-    private ControlRoutingService controlRoutingService;
 
-    @BeforeEach
-    void setUp() {
-        deviceCatalogService = new DeviceCatalogService(new ModelProfileService());
-        controlRoutingService = new ControlRoutingService(deviceCatalogService);
-    }
+    @Autowired
+    private ControlRoutingService controlRoutingService;
 
     @Test
     void choosesLanDirectForOnlineSmartTelevision() {
