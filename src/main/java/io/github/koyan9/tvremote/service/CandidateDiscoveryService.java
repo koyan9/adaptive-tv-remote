@@ -200,7 +200,11 @@ public class CandidateDiscoveryService {
 
     private boolean supportsBrandOnboarding(CandidateDeviceEntity candidate) {
         return candidate.getAvailablePaths().contains(ControlPath.LAN_DIRECT)
-                && ("Samsung".equalsIgnoreCase(candidate.getBrand()) || "LG".equalsIgnoreCase(candidate.getBrand()));
+                && (
+                "Samsung".equalsIgnoreCase(candidate.getBrand())
+                        || "LG".equalsIgnoreCase(candidate.getBrand())
+                        || "Sony".equalsIgnoreCase(candidate.getBrand())
+        );
     }
 
     private DiscoveryCandidateSummary toSummary(CandidateDeviceEntity entity) {

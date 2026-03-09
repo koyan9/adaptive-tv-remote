@@ -12,6 +12,7 @@ import io.github.koyan9.tvremote.model.CommandResult;
 import io.github.koyan9.tvremote.model.DevicePairingRequest;
 import io.github.koyan9.tvremote.model.DevicePairingSummary;
 import io.github.koyan9.tvremote.model.DevicePairingUpdateRequest;
+import io.github.koyan9.tvremote.model.DeviceOnboardingStatusSummary;
 import io.github.koyan9.tvremote.model.DeviceRegistrationRequest;
 import io.github.koyan9.tvremote.model.DiscoveryCandidateSummary;
 import io.github.koyan9.tvremote.model.DiscoveryResult;
@@ -25,6 +26,7 @@ import io.github.koyan9.tvremote.service.ControlExecutionService;
 import io.github.koyan9.tvremote.service.CandidateDiscoveryService;
 import io.github.koyan9.tvremote.service.DeviceCatalogService;
 import io.github.koyan9.tvremote.service.DiscoveryService;
+import io.github.koyan9.tvremote.service.OnboardingStatusService;
 import io.github.koyan9.tvremote.service.PairingManagementService;
 import io.github.koyan9.tvremote.service.RemoteManagementService;
 import io.github.koyan9.tvremote.service.SamsungOnboardingService;
@@ -58,6 +60,7 @@ public class RemoteControlController {
     private final PairingManagementService pairingManagementService;
     private final SamsungOnboardingService samsungOnboardingService;
     private final BrandOnboardingRegistry brandOnboardingRegistry;
+    private final OnboardingStatusService onboardingStatusService;
 
     public RemoteControlController(
             DeviceCatalogService deviceCatalogService,
@@ -71,7 +74,8 @@ public class RemoteControlController {
             RemoteManagementService remoteManagementService,
             PairingManagementService pairingManagementService,
             SamsungOnboardingService samsungOnboardingService,
-            BrandOnboardingRegistry brandOnboardingRegistry
+            BrandOnboardingRegistry brandOnboardingRegistry,
+            OnboardingStatusService onboardingStatusService
     ) {
         this.deviceCatalogService = deviceCatalogService;
         this.discoveryService = discoveryService;
@@ -85,6 +89,7 @@ public class RemoteControlController {
         this.pairingManagementService = pairingManagementService;
         this.samsungOnboardingService = samsungOnboardingService;
         this.brandOnboardingRegistry = brandOnboardingRegistry;
+        this.onboardingStatusService = onboardingStatusService;
     }
 
     @GetMapping("/households")
@@ -113,6 +118,11 @@ public class RemoteControlController {
             @RequestParam(required = false) String brand
     ) {
         return brandOnboardingRegistry.sessions(deviceId, brand);
+    }
+
+    @GetMapping("/devices/{deviceId}/onboarding/status")
+    public DeviceOnboardingStatusSummary onboardingStatus(@PathVariable String deviceId) {
+        return onboardingStatusService.statusForDevice(deviceId);
     }
 
     @GetMapping("/discovery/candidates")

@@ -5,15 +5,21 @@ import io.github.koyan9.tvremote.config.RemoteIntegrationProperties;
 import io.github.koyan9.tvremote.domain.RemoteCommand;
 import io.github.koyan9.tvremote.model.ControlDecision;
 import io.github.koyan9.tvremote.model.RemoteDevice;
+import io.github.koyan9.tvremote.service.BrandOnboardingRegistry;
 import org.springframework.stereotype.Component;
 
 @Component
 public class SonyLanRealProtocolClient implements ProtocolClient {
 
     private final RemoteIntegrationProperties remoteIntegrationProperties;
+    private final BrandOnboardingRegistry brandOnboardingRegistry;
 
-    public SonyLanRealProtocolClient(RemoteIntegrationProperties remoteIntegrationProperties) {
+    public SonyLanRealProtocolClient(
+            RemoteIntegrationProperties remoteIntegrationProperties,
+            BrandOnboardingRegistry brandOnboardingRegistry
+    ) {
         this.remoteIntegrationProperties = remoteIntegrationProperties;
+        this.brandOnboardingRegistry = brandOnboardingRegistry;
     }
 
     @Override
@@ -38,7 +44,13 @@ public class SonyLanRealProtocolClient implements ProtocolClient {
 
     @Override
     public ProtocolDispatchResult dispatch(RemoteDevice device, RemoteCommand command, ControlDecision decision, BrandDispatchPlan dispatchPlan) {
-        RemoteIntegrationProperties.Sony sony = remoteIntegrationProperties.sony();
+        RemoteIntegrationProperties.Sony configuredSony = remoteIntegrationProperties.sony();
+        String negotiatedPreSharedKey = brandOnboardingRegistry.latestNegotiatedCredential(device.id(), "Sony");
+        RemoteIntegrationProperties.Sony sony = new RemoteIntegrationProperties.Sony(
+                configuredSony.enabled(),
+                configuredSony.endpoint(),
+                negotiatedPreSharedKey != null ? negotiatedPreSharedKey : configuredSony.preSharedKey()
+        );
         if (!sony.enabled()) {
             throw new IllegalStateException("Sony LAN real integration is disabled.");
         }

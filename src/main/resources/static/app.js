@@ -1,7 +1,8 @@
-const state = {
+﻿const state = {
   devices: [],
   selectedDeviceId: null,
-  executions: []
+  executions: [],
+  onboardingStatus: null
 };
 
 const els = {
@@ -17,7 +18,12 @@ const els = {
   roomValue: document.getElementById("roomValue"),
   brandValue: document.getElementById("brandValue"),
   pathsValue: document.getElementById("pathsValue"),
-  capabilities: document.getElementById("capabilities")
+  capabilities: document.getElementById("capabilities"),
+  onboardingState: document.getElementById("onboardingState"),
+  onboardingProvider: document.getElementById("onboardingProvider"),
+  onboardingSessionCount: document.getElementById("onboardingSessionCount"),
+  onboardingCredential: document.getElementById("onboardingCredential"),
+  onboardingDetail: document.getElementById("onboardingDetail")
 };
 
 const commandButtons = [...document.querySelectorAll("[data-command]")];
@@ -39,17 +45,23 @@ async function api(path, options = {}) {
   return response.json();
 }
 
+async function refreshSelectedDevice() {
+  renderSelectedDeviceBase();
+  await loadOnboardingStatus();
+  renderOnboardingStatus();
+}
+
 async function loadDevices() {
   state.devices = await api("/api/remote/devices");
   if (!state.selectedDeviceId && state.devices.length > 0) {
     state.selectedDeviceId = state.devices[0].id;
   }
   renderDevices();
-  renderSelectedDevice();
+  await refreshSelectedDevice();
 }
 
 async function scanHome() {
-  els.networkBadge.textContent = "Scanning�?;
+  els.networkBadge.textContent = "Scanning…";
   const result = await api("/api/remote/discovery/scan", { method: "POST" });
   els.networkBadge.textContent = `${result.networkName} · ${result.devices.length} devices`;
   state.devices = result.devices.filter(device => device.deviceType !== "GATEWAY");
@@ -57,12 +69,25 @@ async function scanHome() {
     state.selectedDeviceId = state.devices[0].id;
   }
   renderDevices();
-  renderSelectedDevice();
+  await refreshSelectedDevice();
 }
 
 async function loadExecutions() {
   state.executions = await api("/api/remote/executions");
   renderExecutions();
+}
+
+async function loadOnboardingStatus() {
+  const device = getSelectedDevice();
+  if (!device) {
+    state.onboardingStatus = null;
+    return;
+  }
+  try {
+    state.onboardingStatus = await api(`/api/remote/devices/${device.id}/onboarding/status`);
+  } catch {
+    state.onboardingStatus = null;
+  }
 }
 
 function getSelectedDevice() {
@@ -78,31 +103,33 @@ function renderDevices() {
     fragment.querySelector(".device-room").textContent = device.room;
     fragment.querySelector(".device-name").textContent = device.displayName;
     fragment.querySelector(".device-model").textContent = `${device.brand} ${device.model}`;
+
     const stateEl = fragment.querySelector(".device-state");
     stateEl.textContent = device.online ? "Wi-Fi online" : "Waiting for gateway fallback";
     stateEl.classList.toggle("is-offline", !device.online);
 
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
       state.selectedDeviceId = device.id;
       renderDevices();
-      renderSelectedDevice();
+      await refreshSelectedDevice();
     });
 
     els.deviceList.appendChild(fragment);
   });
 }
 
-function renderSelectedDevice() {
+function renderSelectedDeviceBase() {
   const device = getSelectedDevice();
   if (!device) {
     els.deviceName.textContent = "Select a TV";
     els.deviceMeta.textContent = "The app will choose the best available route automatically.";
     els.routeBadge.textContent = "Idle";
-    els.roomValue.textContent = "�?;
-    els.brandValue.textContent = "�?;
-    els.pathsValue.textContent = "�?;
+    els.roomValue.textContent = "—";
+    els.brandValue.textContent = "—";
+    els.pathsValue.textContent = "—";
     els.capabilities.innerHTML = "";
     commandButtons.forEach(button => button.disabled = true);
+    renderOnboardingStatus();
     return;
   }
 
@@ -124,6 +151,35 @@ function renderSelectedDevice() {
   commandButtons.forEach(button => {
     button.disabled = !supported.has(button.dataset.command);
   });
+}
+
+function renderOnboardingStatus() {
+  const device = getSelectedDevice();
+  const status = state.onboardingStatus;
+
+  if (!device) {
+    els.onboardingState.textContent = "No session";
+    els.onboardingProvider.textContent = "—";
+    els.onboardingSessionCount.textContent = "0";
+    els.onboardingCredential.textContent = "—";
+    els.onboardingDetail.textContent = "Select a device to view onboarding status.";
+    return;
+  }
+
+  if (!status || !status.onboardingSupported) {
+    els.onboardingState.textContent = "Not required";
+    els.onboardingProvider.textContent = "—";
+    els.onboardingSessionCount.textContent = "0";
+    els.onboardingCredential.textContent = "—";
+    els.onboardingDetail.textContent = "This device does not require brand onboarding for its current integration path.";
+    return;
+  }
+
+  els.onboardingState.textContent = status.latestStatus || "No session";
+  els.onboardingProvider.textContent = status.latestProviderId || status.brand;
+  els.onboardingSessionCount.textContent = String(status.sessionCount ?? 0);
+  els.onboardingCredential.textContent = status.negotiatedCredentialPresent ? (status.credentialPreview || "Stored") : "Not negotiated";
+  els.onboardingDetail.textContent = status.latestDetail || "No onboarding session has been recorded yet.";
 }
 
 function renderExecutions() {
@@ -154,7 +210,7 @@ async function sendCommand(command) {
   }
 
   try {
-    els.routeBadge.textContent = "Routing�?;
+    els.routeBadge.textContent = "Routing…";
     const result = await api(`/api/remote/devices/${device.id}/commands`, {
       method: "POST",
       body: JSON.stringify({ command })
@@ -162,6 +218,8 @@ async function sendCommand(command) {
     els.routeBadge.textContent = prettyLabel(result.route);
     state.executions = [result, ...state.executions].slice(0, 12);
     renderExecutions();
+    await loadOnboardingStatus();
+    renderOnboardingStatus();
   } catch (error) {
     els.routeBadge.textContent = "Route failed";
     const failure = {
@@ -203,5 +261,3 @@ if ("serviceWorker" in navigator) {
 Promise.all([loadDevices(), scanHome(), loadExecutions()]).catch(error => {
   els.networkBadge.textContent = error.message;
 });
-
-

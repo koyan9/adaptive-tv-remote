@@ -354,3 +354,24 @@ h2 {
 }
 
 
+.onboarding-panel {
+    margin: 18px 0;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.onboarding-heading {
+    margin-bottom: 14px;
+}
+
+.onboarding-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.onboarding-detail {
+    margin: 12px 0 0;
+}

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ï»¿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -12,7 +12,7 @@
 <div class="shell">
     <header class="hero">
         <div>
-            <p class="eyebrow">Household Remote Mesh</p>
+            <p class="eyebrow">Adaptive TV Control</p>
             <h1>One phone.<br>Every screen.</h1>
         </div>
         <button class="scan-button" id="scanButton" type="button">Scan home</button>
@@ -39,17 +39,39 @@
             <div class="status-grid">
                 <article class="status-card">
                     <span>Room</span>
-                    <strong id="roomValue">â€?/strong>
+                    <strong id="roomValue">â€”</strong>
                 </article>
                 <article class="status-card">
                     <span>Brand</span>
-                    <strong id="brandValue">â€?/strong>
+                    <strong id="brandValue">â€”</strong>
                 </article>
                 <article class="status-card">
                     <span>Paths</span>
-                    <strong id="pathsValue">â€?/strong>
+                    <strong id="pathsValue">â€”</strong>
                 </article>
             </div>
+
+            <section class="onboarding-panel">
+                <div class="panel-heading onboarding-heading">
+                    <h2>Onboarding</h2>
+                    <span id="onboardingState" class="badge muted">No session</span>
+                </div>
+                <div class="onboarding-grid">
+                    <article class="status-card">
+                        <span>Provider</span>
+                        <strong id="onboardingProvider">â€”</strong>
+                    </article>
+                    <article class="status-card">
+                        <span>Sessions</span>
+                        <strong id="onboardingSessionCount">0</strong>
+                    </article>
+                    <article class="status-card">
+                        <span>Credential</span>
+                        <strong id="onboardingCredential">â€”</strong>
+                    </article>
+                </div>
+                <p id="onboardingDetail" class="muted onboarding-detail">Select a device to view onboarding status.</p>
+            </section>
 
             <section class="remote-grid">
                 <button class="command command-power" data-command="POWER_TOGGLE" type="button">Power</button>
@@ -59,17 +81,17 @@
 
                 <button class="command command-volume" data-command="VOLUME_UP" type="button">Vol +</button>
                 <div class="dpad-frame">
-                    <button class="command dpad up" data-command="DPAD_UP" type="button">â–?/button>
+                    <button class="command dpad up" data-command="DPAD_UP" type="button">â–²</button>
                     <button class="command dpad left" data-command="DPAD_LEFT" type="button">â—€</button>
                     <button class="command dpad center" data-command="OK" type="button">OK</button>
-                    <button class="command dpad right" data-command="DPAD_RIGHT" type="button">â–?/button>
-                    <button class="command dpad down" data-command="DPAD_DOWN" type="button">â–?/button>
+                    <button class="command dpad right" data-command="DPAD_RIGHT" type="button">â–¶</button>
+                    <button class="command dpad down" data-command="DPAD_DOWN" type="button">â–¼</button>
                 </div>
-                <button class="command command-volume" data-command="VOLUME_DOWN" type="button">Vol âˆ?/button>
+                <button class="command command-volume" data-command="VOLUME_DOWN" type="button">Vol âˆ’</button>
 
                 <button class="command command-channel" data-command="CHANNEL_UP" type="button">Ch +</button>
                 <button class="command command-aux" data-command="MUTE" type="button">Mute</button>
-                <button class="command command-channel" data-command="CHANNEL_DOWN" type="button">Ch âˆ?/button>
+                <button class="command command-channel" data-command="CHANNEL_DOWN" type="button">Ch âˆ’</button>
             </section>
 
             <div class="capability-row">
@@ -114,5 +136,3 @@
 <script src="/app.js" defer></script>
 </body>
 </html>
-
-

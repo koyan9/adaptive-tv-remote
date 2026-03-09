@@ -34,6 +34,10 @@ public class BrandOnboardingRegistry {
         return providerForBrand(brand).latestNegotiatedCredential(deviceId);
     }
 
+    public boolean supportsBrand(String brand) {
+        return providers.stream().anyMatch(provider -> provider.brand().equalsIgnoreCase(brand));
+    }
+
     private BrandOnboardingProvider providerForCandidate(CandidateDeviceEntity candidate) {
         return providers.stream()
                 .filter(provider -> provider.supportsCandidate(candidate))
