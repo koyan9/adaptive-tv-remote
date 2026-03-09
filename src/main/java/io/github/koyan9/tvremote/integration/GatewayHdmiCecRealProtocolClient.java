@@ -11,9 +11,17 @@ import org.springframework.stereotype.Component;
 public class GatewayHdmiCecRealProtocolClient implements ProtocolClient {
 
     private final RemoteIntegrationProperties remoteIntegrationProperties;
+    private final GatewayHdmiCecPayloadFactory gatewayHdmiCecPayloadFactory;
+    private final GatewayHdmiCecSessionClient gatewayHdmiCecSessionClient;
 
-    public GatewayHdmiCecRealProtocolClient(RemoteIntegrationProperties remoteIntegrationProperties) {
+    public GatewayHdmiCecRealProtocolClient(
+            RemoteIntegrationProperties remoteIntegrationProperties,
+            GatewayHdmiCecPayloadFactory gatewayHdmiCecPayloadFactory,
+            GatewayHdmiCecSessionClient gatewayHdmiCecSessionClient
+    ) {
         this.remoteIntegrationProperties = remoteIntegrationProperties;
+        this.gatewayHdmiCecPayloadFactory = gatewayHdmiCecPayloadFactory;
+        this.gatewayHdmiCecSessionClient = gatewayHdmiCecSessionClient;
     }
 
     @Override
@@ -28,7 +36,7 @@ public class GatewayHdmiCecRealProtocolClient implements ProtocolClient {
 
     @Override
     public String description() {
-        return "Real-protocol skeleton for sending HDMI-CEC actions through the home gateway API.";
+        return "First real-request HDMI-CEC gateway client using HTTP action payloads with hub and token headers.";
     }
 
     @Override
@@ -45,12 +53,21 @@ public class GatewayHdmiCecRealProtocolClient implements ProtocolClient {
         if (gateway.hdmiCecEndpoint() == null || gateway.hdmiCecEndpoint().isBlank()) {
             throw new IllegalStateException("Gateway HDMI-CEC endpoint is missing.");
         }
+        if (gateway.hubId() == null || gateway.hubId().isBlank()) {
+            throw new IllegalStateException("Gateway hub ID is missing.");
+        }
+        if (gateway.authToken() == null || gateway.authToken().isBlank()) {
+            throw new IllegalStateException("Gateway auth token is missing.");
+        }
+
+        GatewayHdmiCecCommandRequest request = gatewayHdmiCecPayloadFactory.create(gateway, device, command);
+        GatewayHdmiCecSessionResult sessionResult = gatewayHdmiCecSessionClient.sendCommand(request);
 
         return new ProtocolDispatchResult(
                 clientKey(),
                 integrationMode(),
-                gateway.hdmiCecEndpoint(),
-                "Prepared an HDMI-CEC gateway request for " + command + " via hub " + gateway.hubId() + " using token " + gateway.authToken() + "."
+                sessionResult.endpoint().toString(),
+                sessionResult.detail()
         );
     }
 }
