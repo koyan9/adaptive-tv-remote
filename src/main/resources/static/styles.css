@@ -375,3 +375,135 @@ h2 {
 .onboarding-detail {
     margin: 12px 0 0;
 }
+.hero-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.scan-button.ghost {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+.section-divider {
+    height: 1px;
+    background: var(--line);
+    margin: 18px 0;
+}
+
+.subheading {
+    margin-bottom: 12px;
+}
+
+.candidate-list {
+    display: grid;
+    gap: 12px;
+}
+
+.candidate-card {
+    width: 100%;
+    text-align: left;
+    padding: 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(144, 215, 255, 0.08), rgba(255, 255, 255, 0.03));
+    color: var(--text);
+    transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.candidate-card:hover {
+    transform: translateY(-1px);
+    border-color: rgba(144, 215, 255, 0.36);
+}
+
+.candidate-card.is-selected {
+    border-color: rgba(144, 215, 255, 0.62);
+    background: linear-gradient(180deg, rgba(144, 215, 255, 0.18), rgba(224, 161, 75, 0.08));
+}
+
+.candidate-room,
+.candidate-name,
+.candidate-model,
+.candidate-state {
+    display: block;
+}
+
+.candidate-room {
+    margin-bottom: 8px;
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ice);
+}
+
+.candidate-model {
+    margin-top: 6px;
+}
+
+.candidate-state {
+    margin-top: 10px;
+    color: var(--success);
+}
+
+.guide-panel {
+    margin: 18px 0;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(144, 215, 255, 0.08), rgba(255, 255, 255, 0.03));
+}
+
+.guide-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 16px;
+}
+
+.scan-button.small {
+    padding: 10px 14px;
+    font-size: 0.85rem;
+}
+
+.guide-summary {
+    margin: 14px 0 12px;
+}
+
+.suggestion-list {
+    display: grid;
+    gap: 10px;
+}
+
+.suggestion-card {
+    border-radius: var(--radius-md);
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.04);
+    padding: 14px;
+}
+
+.suggestion-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.suggestion-card p {
+    margin: 0 0 8px;
+}
+
+.suggestion-meta {
+    color: var(--ice);
+    font-size: 0.82rem;
+}
+
+@media (max-width: 720px) {
+    .hero-actions,
+    .guide-header,
+    .onboarding-grid {
+        grid-template-columns: 1fr;
+        display: grid;
+    }
+}

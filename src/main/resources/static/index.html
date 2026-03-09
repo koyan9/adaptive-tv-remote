@@ -15,7 +15,10 @@
             <p class="eyebrow">Adaptive TV Control</p>
             <h1>One phone.<br>Every screen.</h1>
         </div>
-        <button class="scan-button" id="scanButton" type="button">Scan home</button>
+        <div class="hero-actions">
+            <button class="scan-button" id="scanButton" type="button">Scan home</button>
+            <button class="scan-button ghost" id="scanCandidatesButton" type="button">Find candidates</button>
+        </div>
     </header>
 
     <main class="layout">
@@ -25,6 +28,14 @@
                 <span id="networkBadge" class="badge muted">Waiting for scan</span>
             </div>
             <div id="deviceList" class="device-list"></div>
+
+            <div class="section-divider"></div>
+
+            <div class="panel-heading subheading">
+                <h2>Candidate Devices</h2>
+                <span id="candidateBadge" class="badge muted">No candidates</span>
+            </div>
+            <div id="candidateList" class="candidate-list"></div>
         </section>
 
         <section class="panel panel-remote">
@@ -73,6 +84,22 @@
                 <p id="onboardingDetail" class="muted onboarding-detail">Select a device to view onboarding status.</p>
             </section>
 
+            <section class="guide-panel">
+                <div class="panel-heading onboarding-heading">
+                    <h2>Guided Setup</h2>
+                    <span id="candidateState" class="badge muted">No candidate</span>
+                </div>
+                <div class="guide-header">
+                    <div>
+                        <strong id="candidateName">Select a candidate</strong>
+                        <p id="candidateMeta" class="muted">Scan the home to discover candidate TVs and projectors that can be adopted into the device catalog.</p>
+                    </div>
+                    <button id="adoptCandidateButton" class="scan-button small" type="button" disabled>Adopt Candidate</button>
+                </div>
+                <div id="candidateSummary" class="guide-summary muted">No candidate selected.</div>
+                <div id="candidateSuggestions" class="suggestion-list"></div>
+            </section>
+
             <section class="remote-grid">
                 <button class="command command-power" data-command="POWER_TOGGLE" type="button">Power</button>
                 <button class="command command-aux" data-command="HOME" type="button">Home</button>
@@ -116,6 +143,15 @@
         <strong class="device-name"></strong>
         <span class="device-model muted"></span>
         <span class="device-state"></span>
+    </button>
+</template>
+
+<template id="candidateCardTemplate">
+    <button class="candidate-card" type="button">
+        <span class="candidate-room"></span>
+        <strong class="candidate-name"></strong>
+        <span class="candidate-model muted"></span>
+        <span class="candidate-state"></span>
     </button>
 </template>
 
