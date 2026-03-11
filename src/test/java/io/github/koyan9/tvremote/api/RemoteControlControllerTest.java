@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.hasItem;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -152,6 +153,22 @@ class RemoteControlControllerTest {
                 .andExpect(jsonPath("$.lgEndpoint").exists())
                 .andExpect(jsonPath("$.gatewayInfraredEndpoint").exists())
                 .andExpect(jsonPath("$.gatewayHdmiCecEndpoint").exists());
+    }
+
+    @Test
+    void persistsExecutionHistory() throws Exception {
+        mockMvc.perform(post("/api/remote/devices/tv-office/commands")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "command": "HOME"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/remote/executions"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].deviceId", hasItem("tv-office")));
     }
 }
 

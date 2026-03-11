@@ -10,10 +10,9 @@ import io.github.koyan9.tvremote.integration.ProtocolDispatchResult;
 import io.github.koyan9.tvremote.model.CommandResult;
 import io.github.koyan9.tvremote.model.ControlDecision;
 import io.github.koyan9.tvremote.model.RemoteDevice;
+import io.github.koyan9.tvremote.persistence.CommandExecutionEntity;
+import io.github.koyan9.tvremote.persistence.CommandExecutionRepository;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -26,21 +25,22 @@ public class ControlExecutionService {
     private final ControlRoutingService controlRoutingService;
     private final BrandAdapterRegistry brandAdapterRegistry;
     private final ProtocolClientRegistry protocolClientRegistry;
+    private final CommandExecutionRepository commandExecutionRepository;
     private final Map<ControlPath, ControlAdapter> adapters;
-    private final Deque<CommandResult> recentExecutions = new ArrayDeque<>();
-    private final Object executionLock = new Object();
 
     public ControlExecutionService(
             DeviceCatalogService deviceCatalogService,
             ControlRoutingService controlRoutingService,
             BrandAdapterRegistry brandAdapterRegistry,
             ProtocolClientRegistry protocolClientRegistry,
+            CommandExecutionRepository commandExecutionRepository,
             List<ControlAdapter> controlAdapters
     ) {
         this.deviceCatalogService = deviceCatalogService;
         this.controlRoutingService = controlRoutingService;
         this.brandAdapterRegistry = brandAdapterRegistry;
         this.protocolClientRegistry = protocolClientRegistry;
+        this.commandExecutionRepository = commandExecutionRepository;
         this.adapters = controlAdapters.stream().collect(Collectors.toMap(ControlAdapter::path, Function.identity()));
     }
 
@@ -62,23 +62,54 @@ public class ControlExecutionService {
         BrandDispatchPlan dispatchPlan = brandAdapterRegistry.resolve(device, decision.path(), command);
         ProtocolDispatchResult protocolDispatchResult = protocolClientRegistry.dispatch(device, command, decision, dispatchPlan);
         CommandResult result = adapter.execute(device, command, decision, dispatchPlan, protocolDispatchResult);
-        remember(result);
+        commandExecutionRepository.save(toEntity(result));
         return result;
     }
 
     public List<CommandResult> recentExecutions() {
-        synchronized (executionLock) {
-            return List.copyOf(recentExecutions);
-        }
+        return commandExecutionRepository.findTop12ByOrderByExecutedAtDesc().stream()
+                .map(this::toModel)
+                .toList();
     }
 
-    private void remember(CommandResult result) {
-        synchronized (executionLock) {
-            recentExecutions.addFirst(result);
-            while (recentExecutions.size() > 12) {
-                recentExecutions.removeLast();
-            }
-        }
+    private CommandExecutionEntity toEntity(CommandResult result) {
+        return new CommandExecutionEntity(
+                result.correlationId(),
+                result.deviceId(),
+                result.deviceName(),
+                result.command(),
+                result.route(),
+                result.gatewayDeviceId(),
+                result.adapterLabel(),
+                result.brandAdapterKey(),
+                result.protocolFamily(),
+                result.protocolClientKey(),
+                result.integrationMode(),
+                result.integrationEndpoint(),
+                result.status(),
+                result.message(),
+                result.executedAt()
+        );
+    }
+
+    private CommandResult toModel(CommandExecutionEntity entity) {
+        return new CommandResult(
+                entity.getId(),
+                entity.getDeviceId(),
+                entity.getDeviceName(),
+                entity.getCommand(),
+                entity.getRoute(),
+                entity.getGatewayDeviceId(),
+                entity.getAdapterLabel(),
+                entity.getBrandAdapterKey(),
+                entity.getProtocolFamily(),
+                entity.getProtocolClientKey(),
+                entity.getIntegrationMode(),
+                entity.getIntegrationEndpoint(),
+                entity.getStatus(),
+                entity.getMessage(),
+                entity.getExecutedAt()
+        );
     }
 }
 

@@ -5,7 +5,7 @@
 ### Control Routing
 
 - adaptive route selection across `LAN_DIRECT`, `IR_GATEWAY`, and `HDMI_CEC_GATEWAY`
-- command execution history for recent actions
+- persisted command execution history (recent entries exposed via API)
 - persisted device catalog rather than in-memory-only state
 
 ### Device and Pairing Management
@@ -47,7 +47,7 @@
 
 - current persistence is focused on a single demo-friendly local deployment
 - no user accounts, authentication, or authorization model is present yet
-- no audit trail beyond recent command history and onboarding session records
+- no audit trail beyond basic command history and onboarding session records
 
 ### Frontend Scope
 
