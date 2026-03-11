@@ -66,6 +66,7 @@ Then open:
 - `candidate-loft-samsung` — good for Samsung onboarding and LAN routing
 - `candidate-kitchen-lg` — good for LG onboarding and LAN routing
 - `candidate-study-sony` — good for Sony onboarding and LAN routing
+- `candidate-family-tcl` — good for TCL infrared gateway onboarding
 - `candidate-playroom-projector` — good for gateway-oriented onboarding and HDMI-CEC suggestions
 
 ## Demo Caveats

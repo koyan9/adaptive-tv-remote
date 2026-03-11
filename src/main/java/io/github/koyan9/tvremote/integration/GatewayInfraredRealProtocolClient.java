@@ -48,16 +48,16 @@ public class GatewayInfraredRealProtocolClient implements ProtocolClient {
     public ProtocolDispatchResult dispatch(RemoteDevice device, RemoteCommand command, ControlDecision decision, BrandDispatchPlan dispatchPlan) {
         RemoteIntegrationProperties.Gateway gateway = remoteIntegrationProperties.gateway();
         if (!gateway.enabled()) {
-            throw new IllegalStateException("Gateway infrared real integration is disabled.");
+            throw new IntegrationDisabledException("Gateway infrared real integration is disabled.");
         }
         if (gateway.infraredEndpoint() == null || gateway.infraredEndpoint().isBlank()) {
-            throw new IllegalStateException("Gateway infrared endpoint is missing.");
+            throw new IntegrationConfigurationException("Gateway infrared endpoint is missing.");
         }
         if (gateway.hubId() == null || gateway.hubId().isBlank()) {
-            throw new IllegalStateException("Gateway hub ID is missing.");
+            throw new IntegrationConfigurationException("Gateway hub ID is missing.");
         }
         if (gateway.authToken() == null || gateway.authToken().isBlank()) {
-            throw new IllegalStateException("Gateway auth token is missing.");
+            throw new IntegrationConfigurationException("Gateway auth token is missing.");
         }
 
         GatewayInfraredCommandRequest request = gatewayInfraredPayloadFactory.create(gateway, device, command);

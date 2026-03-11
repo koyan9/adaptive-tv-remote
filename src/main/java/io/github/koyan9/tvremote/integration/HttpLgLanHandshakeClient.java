@@ -35,9 +35,16 @@ public class HttpLgLanHandshakeClient implements LgLanHandshakeClient {
                     "Opened an LG webOS onboarding handshake session. Client key capture is not implemented in the first LG onboarding version."
             );
         } catch (CompletionException exception) {
-            throw new IllegalStateException("LG handshake failed: " + exception.getCause().getMessage(), exception.getCause());
+            Throwable cause = exception.getCause();
+            if (IntegrationErrors.isTimeout(cause)) {
+                throw new IntegrationTimeoutException("LG handshake timed out.", cause);
+            }
+            throw new IntegrationTransportException("LG handshake failed: " + cause.getMessage(), cause);
         } catch (Exception exception) {
-            throw new IllegalStateException("LG handshake failed: " + exception.getMessage(), exception);
+            if (IntegrationErrors.isTimeout(exception)) {
+                throw new IntegrationTimeoutException("LG handshake timed out.", exception);
+            }
+            throw new IntegrationTransportException("LG handshake failed: " + exception.getMessage(), exception);
         }
     }
 }

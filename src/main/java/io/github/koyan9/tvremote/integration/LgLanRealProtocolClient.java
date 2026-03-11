@@ -52,10 +52,10 @@ public class LgLanRealProtocolClient implements ProtocolClient {
                 negotiatedClientKey != null ? negotiatedClientKey : configuredLg.clientKey()
         );
         if (!lg.enabled()) {
-            throw new IllegalStateException("LG LAN real integration is disabled.");
+            throw new IntegrationDisabledException("LG LAN real integration is disabled.");
         }
         if (lg.endpoint() == null || lg.endpoint().isBlank()) {
-            throw new IllegalStateException("LG LAN real integration endpoint is missing.");
+            throw new IntegrationConfigurationException("LG LAN real integration endpoint is missing.");
         }
 
         return new ProtocolDispatchResult(

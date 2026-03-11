@@ -63,6 +63,15 @@ public class GatewayHdmiCecPayloadFactory {
         commandNode.put("name", command.name());
         commandNode.put("actionKey", actionKey);
 
+        String cecPayload = gateway.cecCommands().get(actionKey);
+        if (cecPayload != null && !cecPayload.isBlank()) {
+            commandNode.put("format", "cec-hex");
+            ObjectNode cecNode = commandNode.putObject("cec");
+            cecNode.put("payloadHex", cecPayload);
+        } else {
+            commandNode.put("format", "cec-action");
+        }
+
         try {
             return objectMapper.writeValueAsString(root);
         } catch (JsonProcessingException exception) {

@@ -44,6 +44,7 @@ remote:
       enabled: true
       endpoint: http://192.168.50.41/sony/accessControl
       pre-shared-key: demo-psk
+      ircc-endpoint: http://192.168.50.41/sony/ircc
     lg:
       enabled: true
       endpoint: ws://192.168.50.31:3000

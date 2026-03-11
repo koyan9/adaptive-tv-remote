@@ -35,7 +35,7 @@ public class GatewayInfraredPayloadFactory {
         }
 
         String profileKey = profileKey(device, actionKey);
-        String payload = payload(gateway, device, command, profileKey);
+        String payload = payload(gateway, device, command, profileKey, actionKey);
         return new GatewayInfraredCommandRequest(
                 URI.create(gateway.infraredEndpoint()),
                 gateway.authToken(),
@@ -49,7 +49,8 @@ public class GatewayInfraredPayloadFactory {
             RemoteIntegrationProperties.Gateway gateway,
             RemoteDevice device,
             RemoteCommand command,
-            String profileKey
+            String profileKey,
+            String actionKey
     ) {
         ObjectNode root = objectMapper.createObjectNode();
         root.put("hubId", gateway.hubId());
@@ -64,6 +65,27 @@ public class GatewayInfraredPayloadFactory {
         ObjectNode commandNode = root.putObject("command");
         commandNode.put("name", command.name());
         commandNode.put("profileKey", profileKey);
+        commandNode.put("actionKey", actionKey);
+
+        RemoteIntegrationProperties.IrCode irCode = gateway.irCodes().get(profileKey);
+        if (irCode != null) {
+            commandNode.put("format", "tasmota-irsend");
+            ObjectNode irNode = commandNode.putObject("ir");
+            if (irCode.protocol() != null && !irCode.protocol().isBlank()) {
+                irNode.put("protocol", irCode.protocol());
+            }
+            if (irCode.bits() != null) {
+                irNode.put("bits", irCode.bits());
+            }
+            if (irCode.data() != null && !irCode.data().isBlank()) {
+                irNode.put("data", irCode.data());
+            }
+            if (irCode.repeat() != null) {
+                irNode.put("repeat", irCode.repeat());
+            }
+        } else {
+            commandNode.put("format", "profile-key");
+        }
 
         try {
             return objectMapper.writeValueAsString(root);

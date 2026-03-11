@@ -59,6 +59,16 @@ public class ModelProfileService {
         );
     }
 
+    public ModelProfile tclFamilyRoomProfile() {
+        return new ModelProfile(
+                "TCL",
+                "Q7",
+                "Family Room TCL QLED",
+                List.of(ControlPath.IR_GATEWAY),
+                "Real TCL device routed through the infrared gateway until LAN control is confirmed."
+        );
+    }
+
     public ModelProfile cinemaRoomProfile() {
         return new ModelProfile(
                 "BenQ",

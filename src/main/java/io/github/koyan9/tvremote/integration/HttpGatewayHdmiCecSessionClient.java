@@ -31,7 +31,7 @@ public class HttpGatewayHdmiCecSessionClient implements GatewayHdmiCecSessionCli
 
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() >= 400) {
-                throw new IllegalStateException("HDMI-CEC gateway returned HTTP " + response.statusCode());
+                throw new IntegrationTransportException("HDMI-CEC gateway returned HTTP " + response.statusCode());
             }
 
             return new GatewayHdmiCecSessionResult(
@@ -40,7 +40,10 @@ public class HttpGatewayHdmiCecSessionClient implements GatewayHdmiCecSessionCli
                     "Sent an HDMI-CEC gateway HTTP request using action " + request.actionKey() + "."
             );
         } catch (Exception exception) {
-            throw new IllegalStateException("HDMI-CEC gateway request failed: " + exception.getMessage(), exception);
+            if (IntegrationErrors.isTimeout(exception)) {
+                throw new IntegrationTimeoutException("HDMI-CEC gateway request timed out.", exception);
+            }
+            throw new IntegrationTransportException("HDMI-CEC gateway request failed: " + exception.getMessage(), exception);
         }
     }
 }

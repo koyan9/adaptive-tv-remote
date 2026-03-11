@@ -18,6 +18,11 @@ mvnw.cmd -q spring-boot:run
 
 Open `http://localhost:8080`.
 
+### Local vs Real Integration
+
+- Local dev/test uses `mock` by default. You can run `run-local.cmd` to enforce the mock profile.
+- Real integrations use the `real` profile with `application-real.yml` overrides. Use `run-real.cmd` after updating the placeholder endpoints and credentials.
+
 ## Demo Flow
 
 1. Click `Find candidates`
@@ -29,6 +34,7 @@ Open `http://localhost:8080`.
 
 ## Docs
 
+- `quick-start.md` — production build and run guide
 - `docs/README.md`
 - `docs/API-OVERVIEW.md`
 - `docs/DEMO-GUIDE.md`

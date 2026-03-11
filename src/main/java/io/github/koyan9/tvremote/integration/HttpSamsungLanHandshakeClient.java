@@ -35,9 +35,16 @@ public class HttpSamsungLanHandshakeClient implements SamsungLanHandshakeClient 
                     "Opened a Samsung LAN pairing handshake session. Token capture is not implemented in the first real handshake version."
             );
         } catch (CompletionException exception) {
-            throw new IllegalStateException("Samsung handshake failed: " + exception.getCause().getMessage(), exception.getCause());
+            Throwable cause = exception.getCause();
+            if (IntegrationErrors.isTimeout(cause)) {
+                throw new IntegrationTimeoutException("Samsung handshake timed out.", cause);
+            }
+            throw new IntegrationTransportException("Samsung handshake failed: " + cause.getMessage(), cause);
         } catch (Exception exception) {
-            throw new IllegalStateException("Samsung handshake failed: " + exception.getMessage(), exception);
+            if (IntegrationErrors.isTimeout(exception)) {
+                throw new IntegrationTimeoutException("Samsung handshake timed out.", exception);
+            }
+            throw new IntegrationTransportException("Samsung handshake failed: " + exception.getMessage(), exception);
         }
     }
 }

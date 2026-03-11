@@ -59,13 +59,13 @@ public class SamsungLanRealProtocolClient implements ProtocolClient {
                 configuredSamsung.clientName()
         );
         if (!samsung.enabled()) {
-            throw new IllegalStateException("Samsung LAN real integration is disabled.");
+            throw new IntegrationDisabledException("Samsung LAN real integration is disabled.");
         }
         if (samsung.endpoint() == null || samsung.endpoint().isBlank()) {
-            throw new IllegalStateException("Samsung LAN real integration endpoint is missing.");
+            throw new IntegrationConfigurationException("Samsung LAN real integration endpoint is missing.");
         }
         if (samsung.clientName() == null || samsung.clientName().isBlank()) {
-            throw new IllegalStateException("Samsung LAN client name is missing.");
+            throw new IntegrationConfigurationException("Samsung LAN client name is missing.");
         }
 
         SamsungLanCommandRequest request = samsungLanPayloadFactory.create(samsung, command);

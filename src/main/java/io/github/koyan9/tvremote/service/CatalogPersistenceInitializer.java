@@ -109,6 +109,7 @@ public class CatalogPersistenceInitializer implements ApplicationRunner {
         savePairing("tv-bedroom", "gateway-home-hub", ControlPath.IR_GATEWAY, "sony-ir-seed", "Seeded Sony fallback infrared pairing.");
         savePairing("tv-office", null, ControlPath.LAN_DIRECT, "sony-lan-session", "Seeded direct Sony LAN pairing.");
         savePairing("tv-studio", null, ControlPath.LAN_DIRECT, "lg-lan-session", "Seeded direct LG LAN pairing.");
+        savePairing("tv-family-room", "gateway-home-hub", ControlPath.IR_GATEWAY, "tcl-ir-seed", "Seeded TCL infrared pairing.");
         savePairing("tv-guest-room", "gateway-home-hub", ControlPath.IR_GATEWAY, "hisense-ir-seed", "Seeded legacy infrared pairing.");
         savePairing("tv-cinema-room", "gateway-home-hub", ControlPath.HDMI_CEC_GATEWAY, "cec-seed", "Seeded HDMI-CEC gateway pairing.");
     }

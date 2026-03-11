@@ -6,6 +6,7 @@ public record SonyLanHandshakeRequest(
         URI endpoint,
         String clientIdentity,
         String candidateId,
-        String deviceId
+        String deviceId,
+        String preSharedKey
 ) {
 }

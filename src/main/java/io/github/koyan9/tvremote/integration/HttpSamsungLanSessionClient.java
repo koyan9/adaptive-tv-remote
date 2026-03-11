@@ -35,9 +35,16 @@ public class HttpSamsungLanSessionClient implements SamsungLanSessionClient {
                     "Opened a Samsung LAN WebSocket session and sent remote key " + request.remoteKey() + "."
             );
         } catch (CompletionException exception) {
-            throw new IllegalStateException("Samsung LAN request failed: " + exception.getCause().getMessage(), exception.getCause());
+            Throwable cause = exception.getCause();
+            if (IntegrationErrors.isTimeout(cause)) {
+                throw new IntegrationTimeoutException("Samsung LAN request timed out.", cause);
+            }
+            throw new IntegrationTransportException("Samsung LAN request failed: " + cause.getMessage(), cause);
         } catch (Exception exception) {
-            throw new IllegalStateException("Samsung LAN request failed: " + exception.getMessage(), exception);
+            if (IntegrationErrors.isTimeout(exception)) {
+                throw new IntegrationTimeoutException("Samsung LAN request timed out.", exception);
+            }
+            throw new IntegrationTransportException("Samsung LAN request failed: " + exception.getMessage(), exception);
         }
     }
 }

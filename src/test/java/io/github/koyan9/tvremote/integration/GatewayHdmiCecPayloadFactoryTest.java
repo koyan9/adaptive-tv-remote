@@ -9,6 +9,7 @@ import io.github.koyan9.tvremote.domain.RemoteCommand;
 import io.github.koyan9.tvremote.model.DeviceCapability;
 import io.github.koyan9.tvremote.model.ModelProfile;
 import io.github.koyan9.tvremote.model.RemoteDevice;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Tag("mock-integration")
 class GatewayHdmiCecPayloadFactoryTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -29,7 +31,9 @@ class GatewayHdmiCecPayloadFactoryTest {
                 "http://gateway.local/api/infrared/send",
                 "http://gateway.local/api/cec/send",
                 "hub-one-demo",
-                "demo-gateway-token"
+                "demo-gateway-token",
+                java.util.Map.of(),
+                java.util.Map.of()
         );
         RemoteDevice device = new RemoteDevice(
                 "tv-cinema-room",
@@ -54,5 +58,6 @@ class GatewayHdmiCecPayloadFactoryTest {
         assertThat(payload.get("transport").asText()).isEqualTo("hdmi-cec");
         assertThat(payload.get("target").get("deviceId").asText()).isEqualTo("tv-cinema-room");
         assertThat(payload.get("command").get("actionKey").asText()).isEqualTo("cec-home");
+        assertThat(payload.get("command").get("format").asText()).isEqualTo("cec-action");
     }
 }

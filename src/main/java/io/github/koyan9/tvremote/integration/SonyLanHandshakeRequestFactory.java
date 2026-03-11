@@ -9,6 +9,12 @@ import java.net.URI;
 public class SonyLanHandshakeRequestFactory {
 
     public SonyLanHandshakeRequest create(RemoteIntegrationProperties.Sony sony, String candidateId, String deviceId) {
-        return new SonyLanHandshakeRequest(URI.create(sony.endpoint()), "AdaptiveTvRemote-Sony", candidateId, deviceId);
+        return new SonyLanHandshakeRequest(
+                SonyLanEndpoints.resolveSystemEndpoint(sony),
+                "AdaptiveTvRemote-Sony",
+                candidateId,
+                deviceId,
+                sony.preSharedKey()
+        );
     }
 }

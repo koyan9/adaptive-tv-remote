@@ -99,6 +99,19 @@ public class DemoCatalogFactory {
                 new DeviceCapability(true, true, true, fullRemote),
                 modelProfileService.lgStudioProfile()
         ));
+        seeded.put("tv-family-room", new RemoteDevice(
+                "tv-family-room",
+                "Family Room TCL",
+                DeviceType.LEGACY_TV,
+                "TCL",
+                "Q7",
+                "Family Room",
+                true,
+                EnumSet.of(ControlPath.IR_GATEWAY),
+                List.of("gateway-home-hub"),
+                new DeviceCapability(false, false, false, basicRemote),
+                modelProfileService.tclFamilyRoomProfile()
+        ));
         seeded.put("tv-guest-room", new RemoteDevice(
                 "tv-guest-room",
                 "Guest Room Legacy TV",

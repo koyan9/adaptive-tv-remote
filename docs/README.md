@@ -3,6 +3,7 @@
 - `docs/API-OVERVIEW.md` — REST API surface summary
 - `docs/DEMO-GUIDE.md` — recommended demo walkthrough
 - `docs/CAPABILITIES-AND-LIMITATIONS.md` — current strengths and boundaries
+- `quick-start.md` — production build and run guide
 - `docs/INTEGRATIONS.md` — protocol and integration notes
 - `docs/PROJECT-OVERVIEW.md` — project positioning and architecture intent
 - `docs/NEXT-DEVELOPMENT-PLAN.md` — near-term delivery roadmap

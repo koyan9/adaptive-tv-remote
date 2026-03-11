@@ -48,16 +48,16 @@ public class GatewayHdmiCecRealProtocolClient implements ProtocolClient {
     public ProtocolDispatchResult dispatch(RemoteDevice device, RemoteCommand command, ControlDecision decision, BrandDispatchPlan dispatchPlan) {
         RemoteIntegrationProperties.Gateway gateway = remoteIntegrationProperties.gateway();
         if (!gateway.enabled()) {
-            throw new IllegalStateException("Gateway HDMI-CEC real integration is disabled.");
+            throw new IntegrationDisabledException("Gateway HDMI-CEC real integration is disabled.");
         }
         if (gateway.hdmiCecEndpoint() == null || gateway.hdmiCecEndpoint().isBlank()) {
-            throw new IllegalStateException("Gateway HDMI-CEC endpoint is missing.");
+            throw new IntegrationConfigurationException("Gateway HDMI-CEC endpoint is missing.");
         }
         if (gateway.hubId() == null || gateway.hubId().isBlank()) {
-            throw new IllegalStateException("Gateway hub ID is missing.");
+            throw new IntegrationConfigurationException("Gateway hub ID is missing.");
         }
         if (gateway.authToken() == null || gateway.authToken().isBlank()) {
-            throw new IllegalStateException("Gateway auth token is missing.");
+            throw new IntegrationConfigurationException("Gateway auth token is missing.");
         }
 
         GatewayHdmiCecCommandRequest request = gatewayHdmiCecPayloadFactory.create(gateway, device, command);

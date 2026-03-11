@@ -13,13 +13,19 @@ public class SonyLanRealProtocolClient implements ProtocolClient {
 
     private final RemoteIntegrationProperties remoteIntegrationProperties;
     private final BrandOnboardingRegistry brandOnboardingRegistry;
+    private final SonyIrccPayloadFactory sonyIrccPayloadFactory;
+    private final SonyLanSessionClient sonyLanSessionClient;
 
     public SonyLanRealProtocolClient(
             RemoteIntegrationProperties remoteIntegrationProperties,
-            BrandOnboardingRegistry brandOnboardingRegistry
+            BrandOnboardingRegistry brandOnboardingRegistry,
+            SonyIrccPayloadFactory sonyIrccPayloadFactory,
+            SonyLanSessionClient sonyLanSessionClient
     ) {
         this.remoteIntegrationProperties = remoteIntegrationProperties;
         this.brandOnboardingRegistry = brandOnboardingRegistry;
+        this.sonyIrccPayloadFactory = sonyIrccPayloadFactory;
+        this.sonyLanSessionClient = sonyLanSessionClient;
     }
 
     @Override
@@ -34,7 +40,7 @@ public class SonyLanRealProtocolClient implements ProtocolClient {
 
     @Override
     public String description() {
-        return "Real-protocol skeleton for Sony BRAVIA IP control with configurable endpoint and pre-shared key.";
+        return "Sony BRAVIA IP control over IRCC with configurable endpoint and pre-shared key.";
     }
 
     @Override
@@ -49,20 +55,28 @@ public class SonyLanRealProtocolClient implements ProtocolClient {
         RemoteIntegrationProperties.Sony sony = new RemoteIntegrationProperties.Sony(
                 configuredSony.enabled(),
                 configuredSony.endpoint(),
-                negotiatedPreSharedKey != null ? negotiatedPreSharedKey : configuredSony.preSharedKey()
+                negotiatedPreSharedKey != null ? negotiatedPreSharedKey : configuredSony.preSharedKey(),
+                configuredSony.irccEndpoint()
         );
         if (!sony.enabled()) {
-            throw new IllegalStateException("Sony LAN real integration is disabled.");
+            throw new IntegrationDisabledException("Sony LAN real integration is disabled.");
         }
         if (sony.endpoint() == null || sony.endpoint().isBlank()) {
-            throw new IllegalStateException("Sony LAN real integration endpoint is missing.");
+            throw new IntegrationConfigurationException("Sony LAN real integration endpoint is missing.");
         }
+        if (sony.preSharedKey() == null || sony.preSharedKey().isBlank()) {
+            throw new IntegrationConfigurationException("Sony LAN pre-shared key is missing.");
+        }
+
+        var irccEndpoint = SonyLanEndpoints.resolveIrccEndpoint(sony);
+        SonyIrccCommandRequest request = sonyIrccPayloadFactory.create(irccEndpoint.toString(), sony.preSharedKey(), command);
+        SonyLanSessionResult result = sonyLanSessionClient.sendCommand(request);
 
         return new ProtocolDispatchResult(
                 clientKey(),
                 integrationMode(),
-                sony.endpoint(),
-                "Prepared a Sony BRAVIA request skeleton for " + command + " using pre-shared key " + sony.preSharedKey() + "."
+                result.endpoint().toString(),
+                result.detail()
         );
     }
 }

@@ -221,6 +221,7 @@ public class RemoteControlController {
         payload.put("registeredClients", protocolClientRegistry.descriptors());
         payload.put("samsungEndpoint", remoteIntegrationProperties.samsung().endpoint());
         payload.put("sonyEndpoint", remoteIntegrationProperties.sony().endpoint());
+        payload.put("sonyIrccEndpoint", remoteIntegrationProperties.sony().irccEndpoint());
         payload.put("lgEndpoint", remoteIntegrationProperties.lg().endpoint());
         payload.put("gatewayEndpoint", remoteIntegrationProperties.gateway().endpoint());
         payload.put("gatewayInfraredEndpoint", remoteIntegrationProperties.gateway().infraredEndpoint());

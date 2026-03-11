@@ -7,6 +7,9 @@
 - Recommended commands:
   - Windows: `mvnw.cmd -q test`
   - macOS / Linux: `./mvnw -q test`
+- Mock integration suite (tagged):
+  - Windows: `mvnw.cmd -q test -Djunit.jupiter.tags=mock-integration`
+  - macOS / Linux: `./mvnw -q test -Djunit.jupiter.tags=mock-integration`
 
 ## Workflow
 
@@ -27,7 +30,9 @@
 ## Before opening a pull request
 
 - Run `mvnw.cmd -q test` or `./mvnw -q test`
+- If you touched mock integration tests, run the tagged suite as well
 - If you change configuration or integration behavior, update `docs/INTEGRATIONS.md`
+- If you change `application-real.yml` IR code mapping, update the docs template with `powershell -ExecutionPolicy Bypass -File scripts/update-ir-template.ps1`
 - Summarize scope, validation, and any follow-up work in the PR description
 
 

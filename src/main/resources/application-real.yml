@@ -1,0 +1,72 @@
+﻿remote:
+  integration:
+    default-mode: real
+    adapter-modes:
+      sony-lan: real
+      generic-ir: real
+      generic-hdmi-cec: real
+    sony:
+      enabled: true
+      endpoint: "http://<sony-ip>/sony/accessControl"
+      pre-shared-key: "<sony-psk>"
+      ircc-endpoint: "http://<sony-ip>/sony/ircc"
+    gateway:
+      enabled: true
+      endpoint: "http://<gateway-host>"
+      infrared-endpoint: "http://<gateway-host>/api/infrared/send"
+      hdmi-cec-endpoint: "http://<gateway-host>/api/cec/send"
+      hub-id: "<hub-id>"
+      auth-token: "<gateway-token>"
+      ir-codes:
+        tcl-q7-home:
+          protocol: NEC
+          bits: 32
+          data: "0x00FF48B7"
+          repeat: 1
+        tcl-q7-power-toggle:
+          protocol: NEC
+          bits: 32
+          data: "0x00FF48B7"
+          repeat: 1
+        tcl-q7-volume-up:
+          protocol: NEC
+          bits: 32
+          data: "0x00FF48B7"
+          repeat: 1
+        tcl-q7-volume-down:
+          protocol: NEC
+          bits: 32
+          data: "0x00FF48B7"
+          repeat: 1
+        tcl-q7-back:
+          protocol: NEC
+          bits: 32
+          data: "0x00FF48B7"
+          repeat: 1
+        tcl-q7-dpad-up:
+          protocol: NEC
+          bits: 32
+          data: "0x00FF48B7"
+          repeat: 1
+        tcl-q7-dpad-down:
+          protocol: NEC
+          bits: 32
+          data: "0x00FF48B7"
+          repeat: 1
+        tcl-q7-dpad-left:
+          protocol: NEC
+          bits: 32
+          data: "0x00FF48B7"
+          repeat: 1
+        tcl-q7-dpad-right:
+          protocol: NEC
+          bits: 32
+          data: "0x00FF48B7"
+          repeat: 1
+        tcl-q7-ok:
+          protocol: NEC
+          bits: 32
+          data: "0x00FF48B7"
+          repeat: 1
+      cec-commands:
+        cec-home: "40:44"

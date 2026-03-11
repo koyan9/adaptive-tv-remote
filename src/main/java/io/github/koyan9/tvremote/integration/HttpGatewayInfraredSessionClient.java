@@ -31,7 +31,7 @@ public class HttpGatewayInfraredSessionClient implements GatewayInfraredSessionC
 
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() >= 400) {
-                throw new IllegalStateException("Infrared gateway returned HTTP " + response.statusCode());
+                throw new IntegrationTransportException("Infrared gateway returned HTTP " + response.statusCode());
             }
 
             return new GatewayInfraredSessionResult(
@@ -40,7 +40,10 @@ public class HttpGatewayInfraredSessionClient implements GatewayInfraredSessionC
                     "Sent an infrared gateway HTTP request using profile " + request.profileKey() + "."
             );
         } catch (Exception exception) {
-            throw new IllegalStateException("Infrared gateway request failed: " + exception.getMessage(), exception);
+            if (IntegrationErrors.isTimeout(exception)) {
+                throw new IntegrationTimeoutException("Infrared gateway request timed out.", exception);
+            }
+            throw new IntegrationTransportException("Infrared gateway request failed: " + exception.getMessage(), exception);
         }
     }
 }
