@@ -28,6 +28,7 @@ public class ControlExecutionService {
     private final ProtocolClientRegistry protocolClientRegistry;
     private final Map<ControlPath, ControlAdapter> adapters;
     private final Deque<CommandResult> recentExecutions = new ArrayDeque<>();
+    private final Object executionLock = new Object();
 
     public ControlExecutionService(
             DeviceCatalogService deviceCatalogService,
@@ -66,13 +67,17 @@ public class ControlExecutionService {
     }
 
     public List<CommandResult> recentExecutions() {
-        return List.copyOf(recentExecutions);
+        synchronized (executionLock) {
+            return List.copyOf(recentExecutions);
+        }
     }
 
     private void remember(CommandResult result) {
-        recentExecutions.addFirst(result);
-        while (recentExecutions.size() > 12) {
-            recentExecutions.removeLast();
+        synchronized (executionLock) {
+            recentExecutions.addFirst(result);
+            while (recentExecutions.size() > 12) {
+                recentExecutions.removeLast();
+            }
         }
     }
 }

@@ -6,11 +6,13 @@ import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.time.Duration;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class HttpLgLanHandshakeClient implements LgLanHandshakeClient {
 
     private final HttpClient httpClient;
+    private static final long WS_TIMEOUT_SECONDS = 3;
 
     public HttpLgLanHandshakeClient() {
         this.httpClient = HttpClient.newBuilder()
@@ -22,12 +24,15 @@ public class HttpLgLanHandshakeClient implements LgLanHandshakeClient {
     public LgLanHandshakeResult startHandshake(LgLanHandshakeRequest request) {
         try {
             WebSocket webSocket = httpClient.newWebSocketBuilder()
-                    .connectTimeout(Duration.ofSeconds(3))
+                    .connectTimeout(Duration.ofSeconds(WS_TIMEOUT_SECONDS))
                     .buildAsync(request.endpoint(), new WebSocket.Listener() {
                     })
+                    .orTimeout(WS_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                     .join();
 
-            webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "handshake-opened").join();
+            webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "handshake-opened")
+                    .orTimeout(WS_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                    .join();
 
             return new LgLanHandshakeResult(
                     request.endpoint(),

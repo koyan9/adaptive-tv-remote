@@ -9,6 +9,7 @@ import java.util.Map;
 public record RemoteIntegrationProperties(
         String defaultMode,
         Map<String, String> adapterModes,
+        boolean strictMode,
         Samsung samsung,
         Sony sony,
         Lg lg,

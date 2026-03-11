@@ -6,11 +6,13 @@ import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.time.Duration;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class HttpSamsungLanSessionClient implements SamsungLanSessionClient {
 
     private final HttpClient httpClient;
+    private static final long WS_TIMEOUT_SECONDS = 3;
 
     public HttpSamsungLanSessionClient() {
         this.httpClient = HttpClient.newBuilder()
@@ -22,13 +24,18 @@ public class HttpSamsungLanSessionClient implements SamsungLanSessionClient {
     public SamsungLanSessionResult sendCommand(SamsungLanCommandRequest request) {
         try {
             WebSocket webSocket = httpClient.newWebSocketBuilder()
-                    .connectTimeout(Duration.ofSeconds(3))
+                    .connectTimeout(Duration.ofSeconds(WS_TIMEOUT_SECONDS))
                     .buildAsync(request.endpoint(), new WebSocket.Listener() {
                     })
+                    .orTimeout(WS_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                     .join();
 
-            webSocket.sendText(request.payload(), true).join();
-            webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "command-sent").join();
+            webSocket.sendText(request.payload(), true)
+                    .orTimeout(WS_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                    .join();
+            webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "command-sent")
+                    .orTimeout(WS_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                    .join();
 
             return new SamsungLanSessionResult(
                     request.endpoint(),

@@ -31,6 +31,7 @@
 ## 配置项
 
 - `remote.integration.default-mode`
+- `remote.integration.strict-mode`
 - `remote.integration.adapter-modes.samsung-lan`
 - `remote.integration.adapter-modes.sony-lan`
 - `remote.integration.adapter-modes.lg-lan`

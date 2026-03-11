@@ -64,7 +64,7 @@ public class CandidateDiscoveryService {
             CandidateDeviceEntity existingCandidate = existing.get(candidate.getId());
             if (existingCandidate == null) {
                 candidateDeviceRepository.save(candidate);
-            } else if (existingCandidate.getStatus() == CandidateStatus.DISCOVERED) {
+            } else {
                 existingCandidate.markSeen();
                 candidateDeviceRepository.save(existingCandidate);
             }

@@ -1,4 +1,5 @@
 ﻿remote:
   integration:
     default-mode: mock
+    strict-mode: false
     adapter-modes: {}

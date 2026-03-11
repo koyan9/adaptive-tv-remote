@@ -34,6 +34,7 @@ remote:
     note: Independent TV remote project inside the workspace, intentionally separated from the existing OSS library modules.
   integration:
     default-mode: mock
+    strict-mode: false
     adapter-modes: {}
     samsung:
       enabled: true

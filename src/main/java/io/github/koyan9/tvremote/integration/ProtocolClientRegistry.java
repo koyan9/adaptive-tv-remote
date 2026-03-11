@@ -46,11 +46,16 @@ public class ProtocolClientRegistry {
                 .filter(client -> client.integrationMode() == desiredMode)
                 .filter(client -> client.supports(dispatchPlan))
                 .findFirst()
-                .orElseGet(() -> protocolClients.stream()
-                        .filter(client -> client.integrationMode() == IntegrationMode.MOCK)
-                        .filter(client -> client.supports(dispatchPlan))
-                        .findFirst()
-                        .orElseThrow(() -> new IllegalStateException("No protocol client registered for adapter " + dispatchPlan.adapterKey())));
+                .orElseGet(() -> {
+                    if (desiredMode != IntegrationMode.MOCK && remoteIntegrationProperties.strictMode()) {
+                        throw new IntegrationConfigurationException("No " + desiredMode + " protocol client registered for adapter " + dispatchPlan.adapterKey());
+                    }
+                    return protocolClients.stream()
+                            .filter(client -> client.integrationMode() == IntegrationMode.MOCK)
+                            .filter(client -> client.supports(dispatchPlan))
+                            .findFirst()
+                            .orElseThrow(() -> new IntegrationConfigurationException("No protocol client registered for adapter " + dispatchPlan.adapterKey()));
+                });
     }
 }
 

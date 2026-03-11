@@ -35,6 +35,7 @@ External config options:
 Minimum config to set:
 
 - `remote.integration.default-mode: real`
+- `remote.integration.strict-mode: true`
 - `remote.integration.adapter-modes.sony-lan: real`
 - `remote.integration.adapter-modes.generic-ir: real`
 - `remote.integration.adapter-modes.generic-hdmi-cec: real`

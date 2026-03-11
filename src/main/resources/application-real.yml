@@ -1,6 +1,7 @@
 ﻿remote:
   integration:
     default-mode: real
+    strict-mode: true
     adapter-modes:
       sony-lan: real
       generic-ir: real

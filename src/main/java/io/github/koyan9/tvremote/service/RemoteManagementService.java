@@ -75,10 +75,13 @@ public class RemoteManagementService {
         HouseholdEntity household = householdRepository.findById(request.householdId())
                 .orElseThrow(() -> new NoSuchElementException("Household not found: " + request.householdId()));
         RoomEntity room = resolveRoom(household, request);
+        int sortOrder = deviceRepository.findTopByOrderBySortOrderDesc()
+                .map(DeviceEntity::getSortOrder)
+                .orElse(-1) + 1;
 
         DeviceEntity entity = deviceRepository.save(new DeviceEntity(
                 request.deviceId(),
-                deviceRepository.findAllByOrderBySortOrderAsc().size(),
+                sortOrder,
                 request.displayName(),
                 request.deviceType(),
                 request.brand(),

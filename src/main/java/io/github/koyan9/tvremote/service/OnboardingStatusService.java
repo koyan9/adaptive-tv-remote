@@ -54,6 +54,6 @@ public class OnboardingStatusService {
         if (credential.length() <= 6) {
             return credential;
         }
-        return credential.substring(0, 4) + "…" + credential.substring(credential.length() - 2);
+        return credential.substring(0, 4) + "..." + credential.substring(credential.length() - 2);
     }
 }

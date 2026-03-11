@@ -217,6 +217,7 @@ public class RemoteControlController {
     public Map<String, Object> integrations() {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("defaultMode", remoteIntegrationProperties.modeFor("__default__"));
+        payload.put("strictMode", remoteIntegrationProperties.strictMode());
         payload.put("configuredAdapterModes", remoteIntegrationProperties.adapterModes());
         payload.put("registeredClients", protocolClientRegistry.descriptors());
         payload.put("samsungEndpoint", remoteIntegrationProperties.samsung().endpoint());

@@ -31,6 +31,10 @@ public class ControlRoutingService {
             }
 
             if (candidate == ControlPath.LAN_DIRECT && device.online()) {
+                if (device.capability().requiresPairing()
+                        && !pairingManagementService.hasPairingRecords(device.id(), ControlPath.LAN_DIRECT)) {
+                    continue;
+                }
                 return new ControlDecision(
                         ControlPath.LAN_DIRECT,
                         null,
@@ -41,6 +45,10 @@ public class ControlRoutingService {
             }
 
             if (candidate == ControlPath.IR_GATEWAY || candidate == ControlPath.HDMI_CEC_GATEWAY) {
+                if (device.capability().requiresPairing()
+                        && !pairingManagementService.hasPairingRecords(device.id(), candidate)) {
+                    continue;
+                }
                 RemoteDevice gateway = resolveGateway(device, candidate, preferredGatewayId);
                 if (gateway != null && gateway.online() && gateway.availablePaths().contains(candidate)) {
                     return new ControlDecision(
