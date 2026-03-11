@@ -189,12 +189,21 @@ public class CandidateDiscoveryService {
 
     private List<PairingSuggestion> suggestionsForPath(CandidateDeviceEntity candidate, ControlPath controlPath) {
         if (controlPath == ControlPath.LAN_DIRECT) {
+            if (!candidate.isOnline() && !candidate.isSupportsWakeOnLan()) {
+                return List.of();
+            }
+            String availability = candidate.isOnline()
+                    ? "Candidate is online and supports direct LAN control on the home network."
+                    : "Candidate supports Wake-on-LAN for direct LAN control.";
+            String wifiNote = candidate.isSameWifiRequired()
+                    ? " Same Wi-Fi required."
+                    : "";
             return List.of(new PairingSuggestion(
                     candidate.getId(),
                     controlPath,
                     null,
                     null,
-                    "Candidate is online and supports direct LAN control on the home network.",
+                    availability + wifiNote,
                     true
             ));
         }

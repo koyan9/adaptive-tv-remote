@@ -30,18 +30,24 @@ public class ControlRoutingService {
                 continue;
             }
 
-            if (candidate == ControlPath.LAN_DIRECT && device.online()) {
+            if (candidate == ControlPath.LAN_DIRECT) {
                 if (device.capability().requiresPairing()
                         && !pairingManagementService.hasPairingRecords(device.id(), ControlPath.LAN_DIRECT)) {
                     continue;
                 }
-                return new ControlDecision(
-                        ControlPath.LAN_DIRECT,
-                        null,
-                        "LAN Direct Adapter",
-                        attempted,
-                        "The TV is online on the home Wi-Fi, so the app uses direct local control."
-                );
+                boolean canAttemptLan = device.online() || device.capability().supportsWakeOnLan();
+                if (canAttemptLan) {
+                    String reason = device.online()
+                            ? "The TV is online on the home Wi-Fi, so the app uses direct local control."
+                            : "The TV is offline but supports Wake-on-LAN, so the app attempts direct control.";
+                    return new ControlDecision(
+                            ControlPath.LAN_DIRECT,
+                            null,
+                            "LAN Direct Adapter",
+                            attempted,
+                            reason
+                    );
+                }
             }
 
             if (candidate == ControlPath.IR_GATEWAY || candidate == ControlPath.HDMI_CEC_GATEWAY) {

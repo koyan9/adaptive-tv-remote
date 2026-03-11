@@ -62,6 +62,40 @@ class ControlRoutingServiceTest {
 
     @Test
     @Transactional
+    void attemptsLanDirectWhenWakeOnLanSupported() {
+        String householdId = householdRepository.findFirstByOrderBySortOrderAsc()
+                .orElseThrow()
+                .getId();
+
+        RemoteDevice device = remoteManagementService.registerDevice(new DeviceRegistrationRequest(
+                "tv-wol",
+                "Wake-on-LAN TV",
+                DeviceType.SMART_TV,
+                "TestBrand",
+                "WOL-1",
+                householdId,
+                null,
+                "Lab",
+                false,
+                java.util.Set.of(ControlPath.LAN_DIRECT),
+                java.util.List.of(),
+                true,
+                false,
+                true,
+                java.util.Set.of(RemoteCommand.HOME),
+                "WOL TV",
+                java.util.List.of(ControlPath.LAN_DIRECT),
+                "Offline but supports Wake-on-LAN."
+        ));
+
+        ControlDecision decision = controlRoutingService.chooseRoute(device, null);
+
+        assertThat(decision.path()).isEqualTo(ControlPath.LAN_DIRECT);
+        assertThat(decision.gatewayDeviceId()).isNull();
+    }
+
+    @Test
+    @Transactional
     void blocksRoutesWhenPairingRequiredAndMissing() {
         String householdId = householdRepository.findFirstByOrderBySortOrderAsc()
                 .orElseThrow()
