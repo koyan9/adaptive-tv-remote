@@ -6,6 +6,10 @@ import io.github.koyan9.tvremote.integration.LgLanHandshakeClient;
 import io.github.koyan9.tvremote.integration.LgLanHandshakeRequest;
 import io.github.koyan9.tvremote.integration.LgLanHandshakeRequestFactory;
 import io.github.koyan9.tvremote.integration.LgLanHandshakeResult;
+import io.github.koyan9.tvremote.integration.IntegrationConfigurationException;
+import io.github.koyan9.tvremote.integration.IntegrationDisabledException;
+import io.github.koyan9.tvremote.integration.IntegrationTimeoutException;
+import io.github.koyan9.tvremote.integration.IntegrationTransportException;
 import io.github.koyan9.tvremote.model.BrandOnboardingSessionSummary;
 import io.github.koyan9.tvremote.persistence.CandidateDeviceEntity;
 import io.github.koyan9.tvremote.persistence.DeviceEntity;
@@ -65,19 +69,35 @@ public class LgOnboardingService implements BrandOnboardingProvider {
                 .orElseThrow(() -> new java.util.NoSuchElementException("Device not found: " + deviceId));
 
         LgLanHandshakeRequest request = lgLanHandshakeRequestFactory.create(remoteIntegrationProperties.lg(), candidateId, deviceId);
-        LgLanHandshakeResult result = lgLanHandshakeClient.startHandshake(request);
-
-        LgHandshakeEntity entity = lgHandshakeRepository.save(new LgHandshakeEntity(
-                UUID.randomUUID().toString(),
-                device,
-                candidateId,
-                result.endpoint().toString(),
-                request.clientIdentity(),
-                result.negotiatedClientKey(),
-                LgHandshakeStatus.COMPLETED,
-                result.detail()
-        ));
-        return toSummary(entity);
+        try {
+            LgLanHandshakeResult result = lgLanHandshakeClient.startHandshake(request);
+            LgHandshakeEntity entity = lgHandshakeRepository.save(new LgHandshakeEntity(
+                    UUID.randomUUID().toString(),
+                    device,
+                    candidateId,
+                    result.endpoint().toString(),
+                    request.clientIdentity(),
+                    result.negotiatedClientKey(),
+                    LgHandshakeStatus.COMPLETED,
+                    result.detail()
+            ));
+            return toSummary(entity);
+        } catch (RuntimeException exception) {
+            if (!isOnboardingFailure(exception)) {
+                throw exception;
+            }
+            LgHandshakeEntity entity = lgHandshakeRepository.save(new LgHandshakeEntity(
+                    UUID.randomUUID().toString(),
+                    device,
+                    candidateId,
+                    request.endpoint().toString(),
+                    request.clientIdentity(),
+                    null,
+                    LgHandshakeStatus.FAILED,
+                    exception.getMessage()
+            ));
+            return toSummary(entity);
+        }
     }
 
     @Override
@@ -111,5 +131,12 @@ public class LgOnboardingService implements BrandOnboardingProvider {
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );
+    }
+
+    private boolean isOnboardingFailure(RuntimeException exception) {
+        return exception instanceof IntegrationTransportException
+                || exception instanceof IntegrationTimeoutException
+                || exception instanceof IntegrationConfigurationException
+                || exception instanceof IntegrationDisabledException;
     }
 }

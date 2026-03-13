@@ -11,6 +11,7 @@ public record DeviceOnboardingStatusSummary(
         String latestProviderId,
         String latestStatus,
         String latestDetail,
+        String latestFailureReason,
         boolean negotiatedCredentialPresent,
         String credentialPreview,
         Instant latestUpdatedAt

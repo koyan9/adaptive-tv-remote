@@ -9,6 +9,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -31,7 +32,8 @@ class DiscoveryCandidateControllerTest {
         mockMvc.perform(get("/api/remote/discovery/candidates"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].id", hasItem("candidate-kitchen-lg")))
-                .andExpect(jsonPath("$[*].id", hasItem("candidate-playroom-projector")));
+                .andExpect(jsonPath("$[*].id", hasItem("candidate-playroom-projector")))
+                .andExpect(jsonPath("$[0].sameWifiRequired").exists());
     }
 
     @Test
@@ -43,6 +45,18 @@ class DiscoveryCandidateControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].controlPath", hasItem("HDMI_CEC_GATEWAY")))
                 .andExpect(jsonPath("$[*].gatewayDeviceId", hasItem("gateway-home-hub")));
+    }
+
+    @Test
+    void omitsLanSuggestionWhenSameWifiRequiredAndNetworkMismatch() throws Exception {
+        mockMvc.perform(post("/api/remote/discovery/candidates/scan"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/remote/discovery/candidates/candidate-kitchen-lg/pairing-suggestions")
+                        .param("networkName", "Other Network"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].controlPath", not(hasItem("LAN_DIRECT"))))
+                .andExpect(jsonPath("$[*].controlPath", hasItem("IR_GATEWAY")));
     }
 
     @Test
@@ -69,5 +83,43 @@ class DiscoveryCandidateControllerTest {
         mockMvc.perform(get("/api/remote/discovery/candidates").param("status", "ADOPTED"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].adoptedDeviceId", hasItem("tv-playroom-projector")));
+    }
+
+    @Test
+    void adoptsCandidateIdempotently() throws Exception {
+        mockMvc.perform(post("/api/remote/discovery/candidates/scan"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/remote/discovery/candidates/candidate-playroom-projector/adopt")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("tv-playroom-projector"));
+
+        mockMvc.perform(post("/api/remote/discovery/candidates/candidate-playroom-projector/adopt")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("tv-playroom-projector"));
+    }
+
+    @Test
+    void adoptsCandidateIntoExistingDeviceWhenBrandModelMatch() throws Exception {
+        mockMvc.perform(post("/api/remote/discovery/candidates/scan"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/remote/discovery/candidates/candidate-family-tcl/adopt")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "deviceId": "tv-family-room"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value("tv-family-room"));
+
+        mockMvc.perform(get("/api/remote/discovery/candidates").param("status", "ADOPTED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].adoptedDeviceId", hasItem("tv-family-room")));
     }
 }

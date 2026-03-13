@@ -23,6 +23,9 @@ public record DiscoveryCandidateSummary(
         CandidateStatus status,
         String adoptedDeviceId,
         String discoverySource,
-        Instant lastSeenAt
+        Instant lastSeenAt,
+        Instant updatedAt,
+        Instant createdAt,
+        boolean sameWifiRequired
 ) {
 }

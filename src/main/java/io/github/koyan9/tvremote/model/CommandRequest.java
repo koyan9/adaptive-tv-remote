@@ -5,7 +5,8 @@ import jakarta.validation.constraints.NotNull;
 
 public record CommandRequest(
         @NotNull RemoteCommand command,
-        String preferredGatewayId
+        String preferredGatewayId,
+        String networkName
 ) {
 }
 

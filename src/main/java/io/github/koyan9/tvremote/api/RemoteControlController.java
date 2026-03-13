@@ -17,6 +17,7 @@ import io.github.koyan9.tvremote.model.DeviceRegistrationRequest;
 import io.github.koyan9.tvremote.model.DiscoveryCandidateSummary;
 import io.github.koyan9.tvremote.model.DiscoveryResult;
 import io.github.koyan9.tvremote.model.HouseholdSummary;
+import io.github.koyan9.tvremote.model.IntegrationHealthReport;
 import io.github.koyan9.tvremote.model.PairingSuggestion;
 import io.github.koyan9.tvremote.model.RemoteDevice;
 import io.github.koyan9.tvremote.model.RoomSummary;
@@ -26,6 +27,7 @@ import io.github.koyan9.tvremote.service.ControlExecutionService;
 import io.github.koyan9.tvremote.service.CandidateDiscoveryService;
 import io.github.koyan9.tvremote.service.DeviceCatalogService;
 import io.github.koyan9.tvremote.service.DiscoveryService;
+import io.github.koyan9.tvremote.service.IntegrationHealthService;
 import io.github.koyan9.tvremote.service.OnboardingStatusService;
 import io.github.koyan9.tvremote.service.PairingManagementService;
 import io.github.koyan9.tvremote.service.RemoteManagementService;
@@ -61,6 +63,7 @@ public class RemoteControlController {
     private final SamsungOnboardingService samsungOnboardingService;
     private final BrandOnboardingRegistry brandOnboardingRegistry;
     private final OnboardingStatusService onboardingStatusService;
+    private final IntegrationHealthService integrationHealthService;
 
     public RemoteControlController(
             DeviceCatalogService deviceCatalogService,
@@ -75,7 +78,8 @@ public class RemoteControlController {
             PairingManagementService pairingManagementService,
             SamsungOnboardingService samsungOnboardingService,
             BrandOnboardingRegistry brandOnboardingRegistry,
-            OnboardingStatusService onboardingStatusService
+            OnboardingStatusService onboardingStatusService,
+            IntegrationHealthService integrationHealthService
     ) {
         this.deviceCatalogService = deviceCatalogService;
         this.discoveryService = discoveryService;
@@ -90,6 +94,7 @@ public class RemoteControlController {
         this.samsungOnboardingService = samsungOnboardingService;
         this.brandOnboardingRegistry = brandOnboardingRegistry;
         this.onboardingStatusService = onboardingStatusService;
+        this.integrationHealthService = integrationHealthService;
     }
 
     @GetMapping("/households")
@@ -105,6 +110,11 @@ public class RemoteControlController {
     @GetMapping("/devices/{deviceId}/pairings")
     public List<DevicePairingSummary> pairings(@PathVariable String deviceId) {
         return pairingManagementService.pairingsForDevice(deviceId);
+    }
+
+    @PostMapping("/devices/{deviceId}/pairings/repair")
+    public List<DevicePairingSummary> repairPairings(@PathVariable String deviceId) {
+        return pairingManagementService.repairPairings(deviceId);
     }
 
     @GetMapping("/devices/{deviceId}/onboarding/samsung-handshakes")
@@ -144,8 +154,11 @@ public class RemoteControlController {
     }
 
     @GetMapping("/discovery/candidates/{candidateId}/pairing-suggestions")
-    public List<PairingSuggestion> pairingSuggestions(@PathVariable String candidateId) {
-        return candidateDiscoveryService.pairingSuggestions(candidateId);
+    public List<PairingSuggestion> pairingSuggestions(
+            @PathVariable String candidateId,
+            @RequestParam(required = false) String networkName
+    ) {
+        return candidateDiscoveryService.pairingSuggestions(candidateId, networkName);
     }
 
     @PostMapping("/discovery/candidates/{candidateId}/adopt")
@@ -205,7 +218,7 @@ public class RemoteControlController {
 
     @PostMapping("/devices/{deviceId}/commands")
     public CommandResult sendCommand(@PathVariable String deviceId, @Valid @RequestBody CommandRequest request) {
-        return controlExecutionService.execute(deviceId, request.command(), request.preferredGatewayId());
+        return controlExecutionService.execute(deviceId, request.command(), request.preferredGatewayId(), request.networkName());
     }
 
     @GetMapping("/adapters")
@@ -245,6 +258,11 @@ public class RemoteControlController {
         payload.put("protocolClients", protocolClientRegistry.descriptors());
         payload.put("defaultIntegrationMode", remoteIntegrationProperties.modeFor("__default__"));
         return payload;
+    }
+
+    @GetMapping("/health/integrations")
+    public IntegrationHealthReport integrationHealth() {
+        return integrationHealthService.report();
     }
 }
 

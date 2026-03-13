@@ -42,19 +42,33 @@ public class ProtocolClientRegistry {
     }
 
     private ProtocolClient resolveClient(BrandDispatchPlan dispatchPlan, IntegrationMode desiredMode) {
+        List<String> available = protocolClients.stream()
+                .filter(client -> client.supports(dispatchPlan))
+                .map(client -> client.integrationMode() + ":" + client.clientKey())
+                .toList();
         return protocolClients.stream()
                 .filter(client -> client.integrationMode() == desiredMode)
                 .filter(client -> client.supports(dispatchPlan))
                 .findFirst()
                 .orElseGet(() -> {
                     if (desiredMode != IntegrationMode.MOCK && remoteIntegrationProperties.strictMode()) {
-                        throw new IntegrationConfigurationException("No " + desiredMode + " protocol client registered for adapter " + dispatchPlan.adapterKey());
+                        throw new IntegrationConfigurationException(
+                                "No " + desiredMode + " protocol client registered for adapter " + dispatchPlan.adapterKey(),
+                                dispatchPlan.adapterKey(),
+                                desiredMode,
+                                available
+                        );
                     }
                     return protocolClients.stream()
                             .filter(client -> client.integrationMode() == IntegrationMode.MOCK)
                             .filter(client -> client.supports(dispatchPlan))
                             .findFirst()
-                            .orElseThrow(() -> new IntegrationConfigurationException("No protocol client registered for adapter " + dispatchPlan.adapterKey()));
+                            .orElseThrow(() -> new IntegrationConfigurationException(
+                                    "No protocol client registered for adapter " + dispatchPlan.adapterKey(),
+                                    dispatchPlan.adapterKey(),
+                                    desiredMode,
+                                    available
+                            ));
                 });
     }
 }

@@ -7,6 +7,10 @@ import io.github.koyan9.tvremote.integration.SonyLanHandshakeClient;
 import io.github.koyan9.tvremote.integration.SonyLanHandshakeRequest;
 import io.github.koyan9.tvremote.integration.SonyLanHandshakeRequestFactory;
 import io.github.koyan9.tvremote.integration.SonyLanHandshakeResult;
+import io.github.koyan9.tvremote.integration.IntegrationConfigurationException;
+import io.github.koyan9.tvremote.integration.IntegrationDisabledException;
+import io.github.koyan9.tvremote.integration.IntegrationTimeoutException;
+import io.github.koyan9.tvremote.integration.IntegrationTransportException;
 import io.github.koyan9.tvremote.model.BrandOnboardingSessionSummary;
 import io.github.koyan9.tvremote.persistence.CandidateDeviceEntity;
 import io.github.koyan9.tvremote.persistence.DeviceEntity;
@@ -65,19 +69,35 @@ public class SonyOnboardingService implements BrandOnboardingProvider {
                 .orElseThrow(() -> new java.util.NoSuchElementException("Device not found: " + deviceId));
 
         SonyLanHandshakeRequest request = sonyLanHandshakeRequestFactory.create(remoteIntegrationProperties.sony(), candidateId, deviceId);
-        SonyLanHandshakeResult result = sonyLanHandshakeClient.startHandshake(request);
-
-        SonyHandshakeEntity entity = sonyHandshakeRepository.save(new SonyHandshakeEntity(
-                UUID.randomUUID().toString(),
-                device,
-                candidateId,
-                result.endpoint().toString(),
-                request.clientIdentity(),
-                result.negotiatedPreSharedKey(),
-                SonyHandshakeStatus.COMPLETED,
-                result.detail()
-        ));
-        return toSummary(entity);
+        try {
+            SonyLanHandshakeResult result = sonyLanHandshakeClient.startHandshake(request);
+            SonyHandshakeEntity entity = sonyHandshakeRepository.save(new SonyHandshakeEntity(
+                    UUID.randomUUID().toString(),
+                    device,
+                    candidateId,
+                    result.endpoint().toString(),
+                    request.clientIdentity(),
+                    result.negotiatedPreSharedKey(),
+                    SonyHandshakeStatus.COMPLETED,
+                    result.detail()
+            ));
+            return toSummary(entity);
+        } catch (RuntimeException exception) {
+            if (!isOnboardingFailure(exception)) {
+                throw exception;
+            }
+            SonyHandshakeEntity entity = sonyHandshakeRepository.save(new SonyHandshakeEntity(
+                    UUID.randomUUID().toString(),
+                    device,
+                    candidateId,
+                    request.endpoint().toString(),
+                    request.clientIdentity(),
+                    null,
+                    SonyHandshakeStatus.FAILED,
+                    exception.getMessage()
+            ));
+            return toSummary(entity);
+        }
     }
 
     @Override
@@ -111,5 +131,12 @@ public class SonyOnboardingService implements BrandOnboardingProvider {
                 entity.getCreatedAt(),
                 entity.getUpdatedAt()
         );
+    }
+
+    private boolean isOnboardingFailure(RuntimeException exception) {
+        return exception instanceof IntegrationTransportException
+                || exception instanceof IntegrationTimeoutException
+                || exception instanceof IntegrationConfigurationException
+                || exception instanceof IntegrationDisabledException;
     }
 }

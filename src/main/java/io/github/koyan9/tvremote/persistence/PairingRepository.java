@@ -19,4 +19,6 @@ public interface PairingRepository extends JpaRepository<PairingEntity, String> 
     long countByTargetDevice_Id(String targetDeviceId);
 
     long countByTargetDevice_IdAndControlPath(String targetDeviceId, ControlPath controlPath);
+
+    long countByTargetDevice_IdAndControlPathAndStatus(String targetDeviceId, ControlPath controlPath, PairingStatus status);
 }

@@ -68,6 +68,11 @@
                 </article>
             </div>
 
+            <div class="remote-actions">
+                <button id="repairPairingsButton" class="scan-button ghost small" type="button" disabled>Repair pairings</button>
+                <button id="openPairingsButton" class="scan-button ghost small" type="button" disabled>View pairings</button>
+            </div>
+
             <section class="onboarding-panel">
                 <div class="panel-heading onboarding-heading">
                     <h2>Onboarding</h2>
@@ -89,6 +94,17 @@
                         <span>Credential</span>
                         <strong id="onboardingCredential">—</strong>
                     </article>
+                    <article class="status-card">
+                        <span>Failure</span>
+                        <strong id="onboardingFailureReason">—</strong>
+                    </article>
+                </div>
+                <div id="onboardingFailureBanner" class="error-banner hidden">
+                    <div class="tip-banner-header">
+                        <strong id="onboardingFailureTitle">Onboarding failed</strong>
+                        <button id="onboardingFailureAction" class="scan-button ghost small hidden" type="button">Retry onboarding</button>
+                    </div>
+                    <p id="onboardingFailureMessage">Resolve the issue and retry onboarding.</p>
                 </div>
                 <p id="onboardingDetail" class="muted onboarding-detail">Select a device to view onboarding status.</p>
             </section>
@@ -165,8 +181,59 @@
                     <p id="guideSuccessMessage">The device is now available in the catalog and ready for onboarding-aware control.</p>
                 </div>
 
+                <div id="routeTipBanner" class="tip-banner hidden">
+                    <div class="tip-banner-header">
+                        <strong id="routeTipTitle">Routing tip</strong>
+                        <button id="routeTipAction" class="scan-button ghost small hidden" type="button">Repair pairings</button>
+                    </div>
+                    <div id="routeTipChips" class="tip-chip-row hidden"></div>
+                    <p id="routeTipMessage">Resolve pairing or Wi-Fi issues to continue.</p>
+                </div>
+
                 <div id="candidateSummary" class="guide-summary muted">No candidate selected.</div>
+                <div id="pairingsPanel" class="pairings-panel hidden">
+                    <div class="pairings-header">
+                        <strong>Pairings</strong>
+                        <div class="pairings-actions">
+                            <button id="pairingsActiveOnlyButton" class="filter-chip is-active" type="button">Active only</button>
+                            <button id="copyPairingsButton" class="scan-button ghost small" type="button">Copy summary</button>
+                            <button id="exportPairingsButton" class="scan-button ghost small" type="button">Export JSON</button>
+                            <button id="refreshPairingsButton" class="scan-button ghost small" type="button">Refresh</button>
+                        </div>
+                    </div>
+                    <div id="pairingsFilterState" class="badge muted">Filter: Active + All</div>
+                    <div id="pairingsList" class="pairings-list"></div>
+                    <div id="pairingsExportError" class="error-banner hidden">
+                        <strong>Export failed</strong>
+                        <p>Unable to export pairings. Please retry.</p>
+                        <button id="pairingsExportRetry" class="scan-button ghost small" type="button">Retry export</button>
+                    </div>
+                </div>
                 <div id="candidateSuggestions" class="suggestion-list"></div>
+            </section>
+
+            <section class="integrations-panel">
+                <div class="panel-heading">
+                    <h2>Integration Health</h2>
+                    <button id="refreshIntegrationsButton" class="scan-button ghost small" type="button">Refresh</button>
+                </div>
+                <div class="integration-summary">
+                    <span id="integrationReadyCount" class="badge muted">Ready 0</span>
+                    <span id="integrationIssueCount" class="badge muted">Needs attention 0</span>
+                    <button id="integrationFilterButton" class="filter-chip" type="button">Show issues only</button>
+                    <div class="integration-path-filter">
+                        <button class="filter-chip is-active" data-path-filter="ALL" type="button">All</button>
+                        <button class="filter-chip" data-path-filter="LAN_DIRECT" type="button">LAN</button>
+                        <button class="filter-chip" data-path-filter="IR_GATEWAY" type="button">IR</button>
+                        <button class="filter-chip" data-path-filter="HDMI_CEC_GATEWAY" type="button">HDMI-CEC</button>
+                    </div>
+                    <button id="integrationSortButton" class="filter-chip" type="button">Sort: Issues first</button>
+                    <span id="integrationFilterState" class="badge muted">Filter: All</span>
+                    <span id="integrationLastChecked" class="badge muted">Last checked: —</span>
+                    <span id="integrationCountdown" class="badge muted hidden">Next refresh: —</span>
+                    <button id="integrationAutoRefreshButton" class="filter-chip" type="button">Auto refresh: Off</button>
+                </div>
+                <div id="integrationHealthList" class="integration-list"></div>
             </section>
 
             <section class="remote-grid">
@@ -220,6 +287,7 @@
         <span class="candidate-room"></span>
         <strong class="candidate-name"></strong>
         <span class="candidate-model muted"></span>
+        <span class="candidate-wifi badge muted hidden">Same Wi-Fi</span>
         <span class="candidate-state"></span>
     </button>
 </template>

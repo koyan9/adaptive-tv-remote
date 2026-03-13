@@ -34,7 +34,7 @@ class ControlRoutingServiceTest {
     void choosesLanDirectForOnlineSmartTelevision() {
         RemoteDevice device = deviceCatalogService.getDevice("tv-living-room");
 
-        ControlDecision decision = controlRoutingService.chooseRoute(device, null);
+        ControlDecision decision = controlRoutingService.chooseRoute(device, null, null);
 
         assertThat(decision.path()).isEqualTo(ControlPath.LAN_DIRECT);
         assertThat(decision.gatewayDeviceId()).isNull();
@@ -44,20 +44,55 @@ class ControlRoutingServiceTest {
     void fallsBackToInfraredGatewayWhenDirectControlIsOffline() {
         RemoteDevice device = deviceCatalogService.getDevice("tv-bedroom");
 
-        ControlDecision decision = controlRoutingService.chooseRoute(device, null);
+        ControlDecision decision = controlRoutingService.chooseRoute(device, null, null);
 
         assertThat(decision.path()).isEqualTo(ControlPath.IR_GATEWAY);
         assertThat(decision.gatewayDeviceId()).isEqualTo("gateway-home-hub");
+        assertThat(decision.adapterLabel()).contains("Infrared");
     }
 
     @Test
     void usesInfraredForLegacyTelevision() {
         RemoteDevice device = deviceCatalogService.getDevice("tv-guest-room");
 
-        ControlDecision decision = controlRoutingService.chooseRoute(device, null);
+        ControlDecision decision = controlRoutingService.chooseRoute(device, null, null);
 
         assertThat(decision.path()).isEqualTo(ControlPath.IR_GATEWAY);
-        assertThat(decision.adapterLabel()).contains("Infrared");
+        assertThat(decision.gatewayDeviceId()).isEqualTo("gateway-home-hub");
+    }
+
+    @Test
+    @Transactional
+    void skipsLanDirectWhenSameWifiRequiredAndNetworkMismatch() {
+        String householdId = householdRepository.findFirstByOrderBySortOrderAsc()
+                .orElseThrow()
+                .getId();
+
+        RemoteDevice device = remoteManagementService.registerDevice(new DeviceRegistrationRequest(
+                "tv-wifi-mismatch",
+                "Wi-Fi Mismatch TV",
+                DeviceType.SMART_TV,
+                "TestBrand",
+                "WIFI-2",
+                householdId,
+                null,
+                "Lab",
+                true,
+                java.util.Set.of(ControlPath.LAN_DIRECT, ControlPath.IR_GATEWAY),
+                java.util.List.of("gateway-home-hub"),
+                true,
+                false,
+                false,
+                java.util.Set.of(RemoteCommand.HOME),
+                "Wi-Fi Mismatch",
+                java.util.List.of(ControlPath.LAN_DIRECT, ControlPath.IR_GATEWAY),
+                "Prefers LAN but can fall back."
+        ));
+
+        ControlDecision decision = controlRoutingService.chooseRoute(device, null, "Other Network");
+
+        assertThat(decision.path()).isEqualTo(ControlPath.IR_GATEWAY);
+        assertThat(decision.gatewayDeviceId()).isEqualTo("gateway-home-hub");
     }
 
     @Test
@@ -88,7 +123,7 @@ class ControlRoutingServiceTest {
                 "Offline but supports Wake-on-LAN."
         ));
 
-        ControlDecision decision = controlRoutingService.chooseRoute(device, null);
+        ControlDecision decision = controlRoutingService.chooseRoute(device, null, null);
 
         assertThat(decision.path()).isEqualTo(ControlPath.LAN_DIRECT);
         assertThat(decision.gatewayDeviceId()).isNull();
@@ -122,8 +157,41 @@ class ControlRoutingServiceTest {
                 "Requires pairing before routing."
         ));
 
-        assertThatThrownBy(() -> controlRoutingService.chooseRoute(device, null))
+        assertThatThrownBy(() -> controlRoutingService.chooseRoute(device, null, null))
                 .isInstanceOf(ControlRoutingException.class);
+    }
+
+    @Test
+    @Transactional
+    void blocksLanDirectWhenSameWifiRequiredAndNoFallback() {
+        String householdId = householdRepository.findFirstByOrderBySortOrderAsc()
+                .orElseThrow()
+                .getId();
+
+        RemoteDevice device = remoteManagementService.registerDevice(new DeviceRegistrationRequest(
+                "tv-wifi-only",
+                "Wi-Fi Only TV",
+                DeviceType.SMART_TV,
+                "TestBrand",
+                "WIFI-ONLY",
+                householdId,
+                null,
+                "Lab",
+                true,
+                java.util.Set.of(ControlPath.LAN_DIRECT),
+                java.util.List.of(),
+                true,
+                false,
+                false,
+                java.util.Set.of(RemoteCommand.HOME),
+                "Wi-Fi Only",
+                java.util.List.of(ControlPath.LAN_DIRECT),
+                "Requires same Wi-Fi for LAN control."
+        ));
+
+        assertThatThrownBy(() -> controlRoutingService.chooseRoute(device, null, "Other Network"))
+                .isInstanceOf(ControlRoutingException.class)
+                .hasMessageContaining("same Wi-Fi");
     }
 }
 

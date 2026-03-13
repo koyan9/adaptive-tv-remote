@@ -250,4 +250,87 @@ class RemotePairingControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.gatewayDeviceId").value("gateway-home-hub"));
     }
+
+    @Test
+    void repairsMissingPairingsForDevice() throws Exception {
+        mockMvc.perform(post("/api/remote/devices/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "deviceId": "tv-repair-room",
+                                  "displayName": "Repair Room TV",
+                                  "deviceType": "SMART_TV",
+                                  "brand": "TestBrand",
+                                  "model": "R-100",
+                                  "householdId": "default-home",
+                                  "roomName": "Repair Room",
+                                  "online": false,
+                                  "availablePaths": ["LAN_DIRECT", "IR_GATEWAY"],
+                                  "linkedGatewayIds": ["gateway-home-hub"],
+                                  "sameWifiRequired": false,
+                                  "requiresPairing": true,
+                                  "supportsWakeOnLan": false,
+                                  "supportedCommands": ["POWER_TOGGLE", "HOME", "BACK", "DPAD_UP", "DPAD_DOWN", "DPAD_LEFT", "DPAD_RIGHT", "OK"],
+                                  "profileMarketingName": "Repair TV",
+                                  "preferredPaths": ["LAN_DIRECT", "IR_GATEWAY"],
+                                  "profileNotes": "Registered for repair test."
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/remote/devices/tv-repair-room/pairings/repair"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].controlPath", hasItem("LAN_DIRECT")))
+                .andExpect(jsonPath("$[*].controlPath", hasItem("IR_GATEWAY")));
+
+        mockMvc.perform(post("/api/remote/devices/tv-repair-room/commands")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "command": "HOME"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.route").value("IR_GATEWAY"))
+                .andExpect(jsonPath("$.gatewayDeviceId").value("gateway-home-hub"));
+    }
+
+    @Test
+    void returnsRoutingFailureDetailsWithAttemptedPaths() throws Exception {
+        mockMvc.perform(post("/api/remote/devices/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "deviceId": "tv-nopath",
+                                  "displayName": "No Path TV",
+                                  "deviceType": "LEGACY_TV",
+                                  "brand": "TestBrand",
+                                  "model": "NP-1",
+                                  "householdId": "default-home",
+                                  "roomName": "Lab",
+                                  "online": false,
+                                  "availablePaths": ["IR_GATEWAY"],
+                                  "linkedGatewayIds": [],
+                                  "sameWifiRequired": false,
+                                  "requiresPairing": true,
+                                  "supportsWakeOnLan": false,
+                                  "supportedCommands": ["HOME"],
+                                  "profileMarketingName": "No Path",
+                                  "preferredPaths": ["IR_GATEWAY"],
+                                  "profileNotes": "Requires pairing but none exists."
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/remote/devices/tv-nopath/commands")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "command": "HOME"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.reason").value("NO_VIABLE_PATH"))
+                .andExpect(jsonPath("$.attemptedPaths[0]").value("IR_GATEWAY"));
+    }
 }

@@ -6,6 +6,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import io.github.koyan9.tvremote.persistence.HouseholdRepository;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -19,6 +20,8 @@ class RemoteControlControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+    @Autowired
+    private HouseholdRepository householdRepository;
 
     @Test
     void listsTelevisionDevices() throws Exception {
@@ -126,6 +129,50 @@ class RemoteControlControllerTest {
     }
 
     @Test
+    void reportsWifiMismatchRoutingFailureDetails() throws Exception {
+        String householdId = householdRepository.findFirstByOrderBySortOrderAsc()
+                .orElseThrow()
+                .getId();
+
+        mockMvc.perform(post("/api/remote/devices/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "deviceId": "tv-wifi-only-route",
+                                  "displayName": "Wi-Fi Only TV",
+                                  "deviceType": "SMART_TV",
+                                  "brand": "TestBrand",
+                                  "model": "WIFI-ONLY",
+                                  "householdId": "%s",
+                                  "roomName": "Lab",
+                                  "online": true,
+                                  "availablePaths": ["LAN_DIRECT"],
+                                  "linkedGatewayIds": [],
+                                  "sameWifiRequired": true,
+                                  "requiresPairing": false,
+                                  "supportsWakeOnLan": false,
+                                  "supportedCommands": ["HOME"],
+                                  "profileMarketingName": "Wi-Fi Only",
+                                  "preferredPaths": ["LAN_DIRECT"],
+                                  "profileNotes": "Requires same Wi-Fi."
+                                }
+                                """.formatted(householdId)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/remote/devices/tv-wifi-only-route/commands")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "command": "HOME",
+                                  "networkName": "Other Network"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.reason").value("WIFI_MISMATCH"))
+                .andExpect(jsonPath("$.attemptedPaths[0]").value("LAN_DIRECT"));
+    }
+
+    @Test
     void exposesStandaloneProjectProfileAndAdapters() throws Exception {
         mockMvc.perform(get("/api/remote/profile"))
                 .andExpect(status().isOk())
@@ -153,6 +200,16 @@ class RemoteControlControllerTest {
                 .andExpect(jsonPath("$.lgEndpoint").exists())
                 .andExpect(jsonPath("$.gatewayInfraredEndpoint").exists())
                 .andExpect(jsonPath("$.gatewayHdmiCecEndpoint").exists());
+    }
+
+    @Test
+    void exposesIntegrationHealthSummary() throws Exception {
+        mockMvc.perform(get("/api/remote/health/integrations"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.defaultMode").value("mock"))
+                .andExpect(jsonPath("$.adapters[0].adapterKey").exists())
+                .andExpect(jsonPath("$.adapters[0].desiredMode").exists())
+                .andExpect(jsonPath("$.adapters[0].ready").exists());
     }
 
     @Test

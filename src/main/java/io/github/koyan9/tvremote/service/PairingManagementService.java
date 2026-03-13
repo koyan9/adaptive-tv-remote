@@ -13,6 +13,7 @@ import io.github.koyan9.tvremote.persistence.PairingRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -115,6 +116,40 @@ public class PairingManagementService {
         return pairingRepository.countByTargetDevice_IdAndControlPath(deviceId, controlPath) > 0;
     }
 
+    public boolean hasActivePairingRecords(String deviceId, ControlPath controlPath) {
+        return pairingRepository.countByTargetDevice_IdAndControlPathAndStatus(deviceId, controlPath, PairingStatus.ACTIVE) > 0;
+    }
+
+    @Transactional
+    public List<DevicePairingSummary> repairPairings(String deviceId) {
+        DeviceEntity targetDevice = verifyTargetDevice(deviceId);
+        List<DevicePairingSummary> repaired = new ArrayList<>();
+
+        for (ControlPath controlPath : targetDevice.getAvailablePaths()) {
+            if (hasActivePairingRecords(deviceId, controlPath)) {
+                continue;
+            }
+
+            DeviceEntity gateway = controlPath == ControlPath.LAN_DIRECT
+                    ? null
+                    : resolveRepairGateway(targetDevice, controlPath);
+            if (controlPath != ControlPath.LAN_DIRECT && gateway == null) {
+                continue;
+            }
+
+            DevicePairingSummary summary = createPairing(new DevicePairingRequest(
+                    deviceId,
+                    controlPath,
+                    gateway == null ? null : gateway.getId(),
+                    "pairing-repair",
+                    "Repaired missing pairing for " + controlPath + "."
+            ));
+            repaired.add(summary);
+        }
+
+        return repaired;
+    }
+
     private DeviceEntity verifyTargetDevice(String deviceId) {
         DeviceEntity device = deviceRepository.findById(deviceId)
                 .orElseThrow(() -> new NoSuchElementException("Device not found: " + deviceId));
@@ -176,6 +211,32 @@ public class PairingManagementService {
                     pairing.setNotes("Superseded by a newer active pairing.");
                     pairingRepository.save(pairing);
                 });
+    }
+
+    private DeviceEntity resolveRepairGateway(DeviceEntity targetDevice, ControlPath controlPath) {
+        for (String gatewayId : targetDevice.getLinkedGatewayIds()) {
+            DeviceEntity gateway = deviceRepository.findById(gatewayId).orElse(null);
+            if (gateway == null) {
+                continue;
+            }
+            if (gateway.getDeviceType() != DeviceType.GATEWAY) {
+                continue;
+            }
+            if (!gateway.isOnline()) {
+                continue;
+            }
+            if (!gateway.getAvailablePaths().contains(controlPath)) {
+                continue;
+            }
+            return gateway;
+        }
+
+        return deviceRepository.findAllByOrderBySortOrderAsc().stream()
+                .filter(device -> device.getDeviceType() == DeviceType.GATEWAY)
+                .filter(DeviceEntity::isOnline)
+                .filter(device -> device.getAvailablePaths().contains(controlPath))
+                .findFirst()
+                .orElse(null);
     }
 
     private DevicePairingSummary toSummary(PairingEntity entity) {

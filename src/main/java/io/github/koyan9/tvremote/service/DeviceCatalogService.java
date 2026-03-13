@@ -68,6 +68,12 @@ public class DeviceCatalogService {
                 .map(household -> household.getNetworkName())
                 .orElse("Unknown Network");
     }
+
+    public String householdNetworkNameForDevice(String deviceId) {
+        return deviceRepository.findById(deviceId)
+                .map(device -> device.getRoom().getHousehold().getNetworkName())
+                .orElse(null);
+    }
 }
 
 

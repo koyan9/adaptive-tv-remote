@@ -208,6 +208,79 @@ h2 {
     margin-bottom: 18px;
 }
 
+.remote-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.pairings-panel {
+    margin: 12px 0 16px;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.pairings-panel .badge {
+    display: inline-flex;
+    margin-bottom: 10px;
+}
+
+.pairings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.pairings-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.pairings-list {
+    display: grid;
+    gap: 8px;
+}
+
+.pairing-card {
+    border-radius: var(--radius-md);
+    border: 1px solid var(--line);
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.pairing-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.pairing-actions button {
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--muted);
+    font-size: 0.72rem;
+}
+
+.pairing-card strong {
+    display: block;
+    font-size: 0.9rem;
+}
+
+.pairing-card span {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 4px;
+}
+
 .status-card {
     padding: 16px;
     border-radius: var(--radius-md);
@@ -318,6 +391,28 @@ h2 {
     padding: 14px;
 }
 
+.log-item.is-repair {
+    border-color: rgba(224, 161, 75, 0.4);
+    background: rgba(224, 161, 75, 0.12);
+}
+
+.log-item.is-repair-error {
+    border-color: rgba(244, 111, 111, 0.5);
+    background: rgba(244, 111, 111, 0.16);
+}
+
+.log-item.is-repair-error .log-route {
+    border-color: rgba(244, 111, 111, 0.55);
+    background: rgba(244, 111, 111, 0.2);
+    color: var(--danger);
+}
+
+.log-item.is-repair .log-route {
+    border-color: rgba(224, 161, 75, 0.5);
+    background: rgba(224, 161, 75, 0.18);
+    color: var(--gold);
+}
+
 .log-meta {
     margin: 8px 0;
 }
@@ -368,7 +463,7 @@ h2 {
 
 .onboarding-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
 }
 
@@ -446,12 +541,143 @@ h2 {
     color: var(--success);
 }
 
+.candidate-wifi {
+    margin-top: 8px;
+    border-color: rgba(224, 161, 75, 0.3);
+    color: var(--gold);
+    background: rgba(224, 161, 75, 0.12);
+    width: fit-content;
+}
+
 .guide-panel {
     margin: 18px 0;
     padding: 16px;
     border-radius: var(--radius-md);
     border: 1px solid var(--line);
     background: linear-gradient(180deg, rgba(144, 215, 255, 0.08), rgba(255, 255, 255, 0.03));
+}
+
+.integrations-panel {
+    margin: 18px 0 0;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(21, 29, 39, 0.9), rgba(10, 15, 22, 0.88));
+}
+
+.integration-summary {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.integration-path-filter {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.integration-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.integration-card {
+    border-radius: var(--radius-md);
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.04);
+    padding: 12px 14px;
+}
+
+.integration-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.integration-toggle {
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 0.72rem;
+    color: var(--muted);
+}
+
+.integration-detail {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.08);
+    display: none;
+}
+
+.integration-detail.is-open {
+    display: block;
+}
+
+.integration-card h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.integration-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.78rem;
+}
+
+.integration-count {
+    border-color: rgba(144, 215, 255, 0.35);
+    color: var(--ice);
+    background: rgba(144, 215, 255, 0.12);
+}
+
+.integration-pill {
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--muted);
+}
+
+.integration-pill.ready {
+    border-color: rgba(131, 214, 156, 0.45);
+    color: var(--success);
+    background: rgba(131, 214, 156, 0.12);
+}
+
+.integration-pill.issue {
+    border-color: rgba(244, 111, 111, 0.45);
+    color: var(--danger);
+    background: rgba(244, 111, 111, 0.12);
+}
+
+.integration-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-right: 6px;
+}
+
+.integration-icon.ready {
+    background: rgba(131, 214, 156, 0.2);
+    color: var(--success);
+}
+
+.integration-icon.issue {
+    background: rgba(244, 111, 111, 0.2);
+    color: var(--danger);
 }
 
 .guide-header {
@@ -785,6 +1011,50 @@ h2 {
     border-radius: var(--radius-md);
     border: 1px solid rgba(244, 111, 111, 0.36);
     background: rgba(244, 111, 111, 0.08);
+}
+
+.tip-banner {
+    margin: 14px 0;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(224, 161, 75, 0.32);
+    background: rgba(224, 161, 75, 0.08);
+}
+
+.tip-banner-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.tip-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0;
+}
+
+.tip-chip {
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(224, 161, 75, 0.35);
+    background: rgba(224, 161, 75, 0.12);
+    color: var(--gold);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.tip-banner strong,
+.tip-banner p {
+    display: block;
+    margin: 0;
+}
+
+.tip-banner p {
+    margin-top: 6px;
+    color: var(--muted);
 }
 
 .error-banner strong,

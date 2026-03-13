@@ -22,8 +22,11 @@ public class ControlRoutingService {
         this.pairingManagementService = pairingManagementService;
     }
 
-    public ControlDecision chooseRoute(RemoteDevice device, String preferredGatewayId) {
+    public ControlDecision chooseRoute(RemoteDevice device, String preferredGatewayId, String networkName) {
         List<ControlPath> attempted = new ArrayList<>();
+        String normalizedNetworkName = normalizeNetworkName(networkName);
+        String expectedNetworkName = null;
+        boolean lanBlockedByWifi = false;
         for (ControlPath candidate : device.profile().preferredPaths()) {
             attempted.add(candidate);
             if (!device.availablePaths().contains(candidate)) {
@@ -31,6 +34,15 @@ public class ControlRoutingService {
             }
 
             if (candidate == ControlPath.LAN_DIRECT) {
+                if (device.capability().sameWifiRequired() && normalizedNetworkName != null) {
+                    if (expectedNetworkName == null) {
+                        expectedNetworkName = normalizeNetworkName(deviceCatalogService.householdNetworkNameForDevice(device.id()));
+                    }
+                    if (expectedNetworkName != null && !expectedNetworkName.equalsIgnoreCase(normalizedNetworkName)) {
+                        lanBlockedByWifi = true;
+                        continue;
+                    }
+                }
                 if (device.capability().requiresPairing()
                         && !pairingManagementService.hasPairingRecords(device.id(), ControlPath.LAN_DIRECT)) {
                     continue;
@@ -68,7 +80,18 @@ public class ControlRoutingService {
             }
         }
 
-        throw new ControlRoutingException("No viable control path is available for device " + device.displayName());
+        if (lanBlockedByWifi) {
+            String detail = expectedNetworkName == null
+                    ? "LAN direct control requires the same Wi-Fi network."
+                    : "LAN direct control requires the same Wi-Fi network. Expected \"" + expectedNetworkName + "\" but received \"" + normalizedNetworkName + "\".";
+            throw new ControlRoutingException(detail, ControlRoutingFailureReason.WIFI_MISMATCH, attempted);
+        }
+
+        throw new ControlRoutingException(
+                "No viable control path is available for device " + device.displayName(),
+                ControlRoutingFailureReason.NO_VIABLE_PATH,
+                attempted
+        );
     }
 
     private RemoteDevice resolveGateway(RemoteDevice device, ControlPath controlPath, String preferredGatewayId) {
@@ -98,6 +121,14 @@ public class ControlRoutingService {
             }
         }
         return null;
+    }
+
+    private String normalizeNetworkName(String networkName) {
+        if (networkName == null) {
+            return null;
+        }
+        String trimmed = networkName.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }
 

@@ -23,6 +23,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -198,6 +199,7 @@ public class CandidateDeviceEntity {
     public Instant getLastSeenAt() { return lastSeenAt; }
     public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
+    public void setOnline(boolean online) { this.online = online; }
 
     public void markSeen() {
         this.lastSeenAt = Instant.now();
@@ -209,5 +211,70 @@ public class CandidateDeviceEntity {
 
     public void setAdoptedDeviceId(String adoptedDeviceId) {
         this.adoptedDeviceId = adoptedDeviceId;
+    }
+
+    public boolean refreshFromScan(CandidateDeviceEntity scanned) {
+        boolean changed = false;
+        if (!Objects.equals(displayName, scanned.displayName)) {
+            displayName = scanned.displayName;
+            changed = true;
+        }
+        if (deviceType != scanned.deviceType) {
+            deviceType = scanned.deviceType;
+            changed = true;
+        }
+        if (!Objects.equals(brand, scanned.brand)) {
+            brand = scanned.brand;
+            changed = true;
+        }
+        if (!Objects.equals(model, scanned.model)) {
+            model = scanned.model;
+            changed = true;
+        }
+        if (!Objects.equals(roomName, scanned.roomName)) {
+            roomName = scanned.roomName;
+            changed = true;
+        }
+        if (online != scanned.online) {
+            online = scanned.online;
+            changed = true;
+        }
+        if (!Objects.equals(availablePaths, scanned.availablePaths)) {
+            availablePaths = new LinkedHashSet<>(scanned.availablePaths);
+            changed = true;
+        }
+        if (!Objects.equals(supportedCommands, scanned.supportedCommands)) {
+            supportedCommands = new LinkedHashSet<>(scanned.supportedCommands);
+            changed = true;
+        }
+        if (!Objects.equals(preferredPaths, scanned.preferredPaths)) {
+            preferredPaths = new ArrayList<>(scanned.preferredPaths);
+            changed = true;
+        }
+        if (sameWifiRequired != scanned.sameWifiRequired) {
+            sameWifiRequired = scanned.sameWifiRequired;
+            changed = true;
+        }
+        if (requiresPairing != scanned.requiresPairing) {
+            requiresPairing = scanned.requiresPairing;
+            changed = true;
+        }
+        if (supportsWakeOnLan != scanned.supportsWakeOnLan) {
+            supportsWakeOnLan = scanned.supportsWakeOnLan;
+            changed = true;
+        }
+        if (!Objects.equals(profileMarketingName, scanned.profileMarketingName)) {
+            profileMarketingName = scanned.profileMarketingName;
+            changed = true;
+        }
+        if (!Objects.equals(profileNotes, scanned.profileNotes)) {
+            profileNotes = scanned.profileNotes;
+            changed = true;
+        }
+        if (!Objects.equals(discoverySource, scanned.discoverySource)) {
+            discoverySource = scanned.discoverySource;
+            changed = true;
+        }
+        return changed;
     }
 }

@@ -5,6 +5,10 @@ import io.github.koyan9.tvremote.integration.SamsungLanHandshakeClient;
 import io.github.koyan9.tvremote.integration.SamsungLanHandshakeRequest;
 import io.github.koyan9.tvremote.integration.SamsungLanHandshakeRequestFactory;
 import io.github.koyan9.tvremote.integration.SamsungLanHandshakeResult;
+import io.github.koyan9.tvremote.integration.IntegrationConfigurationException;
+import io.github.koyan9.tvremote.integration.IntegrationDisabledException;
+import io.github.koyan9.tvremote.integration.IntegrationTimeoutException;
+import io.github.koyan9.tvremote.integration.IntegrationTransportException;
 import io.github.koyan9.tvremote.model.BrandOnboardingSessionSummary;
 import io.github.koyan9.tvremote.model.SamsungHandshakeSummary;
 import io.github.koyan9.tvremote.persistence.CandidateDeviceEntity;
@@ -48,19 +52,35 @@ public class SamsungOnboardingService implements BrandOnboardingProvider {
                 .orElseThrow(() -> new java.util.NoSuchElementException("Device not found: " + deviceId));
 
         SamsungLanHandshakeRequest request = samsungLanHandshakeRequestFactory.create(remoteIntegrationProperties.samsung(), candidateId, deviceId);
-        SamsungLanHandshakeResult result = samsungLanHandshakeClient.startHandshake(request);
-
-        SamsungHandshakeEntity entity = samsungHandshakeRepository.save(new SamsungHandshakeEntity(
-                UUID.randomUUID().toString(),
-                device,
-                candidateId,
-                result.endpoint().toString(),
-                request.clientName(),
-                result.negotiatedToken(),
-                SamsungHandshakeStatus.COMPLETED,
-                result.detail()
-        ));
-        return toSummary(entity);
+        try {
+            SamsungLanHandshakeResult result = samsungLanHandshakeClient.startHandshake(request);
+            SamsungHandshakeEntity entity = samsungHandshakeRepository.save(new SamsungHandshakeEntity(
+                    UUID.randomUUID().toString(),
+                    device,
+                    candidateId,
+                    result.endpoint().toString(),
+                    request.clientName(),
+                    result.negotiatedToken(),
+                    SamsungHandshakeStatus.COMPLETED,
+                    result.detail()
+            ));
+            return toSummary(entity);
+        } catch (RuntimeException exception) {
+            if (!isOnboardingFailure(exception)) {
+                throw exception;
+            }
+            SamsungHandshakeEntity entity = samsungHandshakeRepository.save(new SamsungHandshakeEntity(
+                    UUID.randomUUID().toString(),
+                    device,
+                    candidateId,
+                    request.endpoint().toString(),
+                    request.clientName(),
+                    null,
+                    SamsungHandshakeStatus.FAILED,
+                    exception.getMessage()
+            ));
+            return toSummary(entity);
+        }
     }
 
     @Override
@@ -139,5 +159,12 @@ public class SamsungOnboardingService implements BrandOnboardingProvider {
                 summary.createdAt(),
                 summary.updatedAt()
         );
+    }
+
+    private boolean isOnboardingFailure(RuntimeException exception) {
+        return exception instanceof IntegrationTransportException
+                || exception instanceof IntegrationTimeoutException
+                || exception instanceof IntegrationConfigurationException
+                || exception instanceof IntegrationDisabledException;
     }
 }

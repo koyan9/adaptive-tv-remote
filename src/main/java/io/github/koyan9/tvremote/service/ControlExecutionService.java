@@ -44,7 +44,7 @@ public class ControlExecutionService {
         this.adapters = controlAdapters.stream().collect(Collectors.toMap(ControlAdapter::path, Function.identity()));
     }
 
-    public CommandResult execute(String deviceId, RemoteCommand command, String preferredGatewayId) {
+    public CommandResult execute(String deviceId, RemoteCommand command, String preferredGatewayId, String networkName) {
         RemoteDevice device = deviceCatalogService.getDevice(deviceId);
         if (!device.isTelevision()) {
             throw new IllegalArgumentException("Only television devices can receive remote commands.");
@@ -53,7 +53,7 @@ public class ControlExecutionService {
             throw new IllegalArgumentException("Command " + command + " is not supported for device " + device.displayName());
         }
 
-        ControlDecision decision = controlRoutingService.chooseRoute(device, preferredGatewayId);
+        ControlDecision decision = controlRoutingService.chooseRoute(device, preferredGatewayId, networkName);
         ControlAdapter adapter = adapters.get(decision.path());
         if (adapter == null) {
             throw new IllegalStateException("No adapter registered for path " + decision.path());
